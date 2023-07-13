@@ -6,6 +6,7 @@ fn main() {
     // Render
     print!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
     for j in (0..IMAGE_HEIGHT).rev() {
+        eprint!("\nScanlines remaining: {}\n", j+1);
         for i in 0..IMAGE_WIDTH {
             let r:f64 = (i as f64) / ((IMAGE_WIDTH-1) as f64);
             let g:f64 = (j as f64) / ((IMAGE_HEIGHT-1) as f64);
@@ -18,4 +19,5 @@ fn main() {
             print!("{ir} {ig} {ib}\n");
         }
     }
+    eprint!("\nDone.\n");
 }
