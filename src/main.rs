@@ -65,7 +65,7 @@ impl Ray {
             return Color::zero();
         }
 
-        if let Some(hit) = world.hit(self, 0.0, Float::INFINITY) {
+        if let Some(hit) = world.hit(self, 0.001, Float::INFINITY) {
             let target = hit.p() + hit.normal() + Vec3::random_sphere(rng);
             let ref new_dir = target - hit.p();
             let ref new_ray = Ray::new(hit.p(), new_dir);
