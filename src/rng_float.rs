@@ -9,14 +9,18 @@ pub struct RngGen {
 }
 
 impl RngGen {
-    pub fn new(min: Float, max: Float) -> Self {
+    pub fn new() -> Self {
         Self {
             rng: Xoshiro128Plus::from_entropy(),
-            dist: Uniform::from(min..max),
+            dist: Uniform::from(0.0..1.0),
         }
     }
 
     pub fn get(&mut self) -> Float {
         self.dist.sample(&mut self.rng)
+    }
+
+    pub fn range(&mut self, min: Float, max: Float) -> Float {
+        min + (max-min)*self.get()
     }
 }

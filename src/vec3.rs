@@ -1,4 +1,5 @@
 pub use super::float::*;
+pub use super::rng_float::*;
 
 pub struct Vec3 {
     x: Float,
@@ -13,6 +14,23 @@ impl Vec3 {
 
     pub fn one() -> Self {
         Self::new(1.0, 1.0, 1.0)
+    }
+
+    pub fn random(rng: &mut RngGen) -> Self {
+        Self::new(rng.get(), rng.get(), rng.get())
+    }
+
+    pub fn random_range(rng: &mut RngGen, min: Float, max: Float) -> Self {
+        Self::new(rng.range(min, max), rng.range(min, max), rng.range(min, max))
+    }
+
+    pub fn random_sphere(rng: &mut RngGen) -> Self {
+        loop {
+            let p = Self::random_range(rng, -1.0, 1.0);
+            if p.length_squared() < 1.0 {
+                break p;
+            }
+        }
     }
 
     pub fn new(x: Float, y: Float, z:Float) -> Self {

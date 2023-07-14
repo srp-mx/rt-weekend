@@ -22,13 +22,14 @@ use camera::Camera;
 
 fn main() {
     // RNG
-    let mut rand01 = RngGen::new(0.0, 1.0);
+    let mut rng = RngGen::new();
 
     // Image
     const ASPECT_RATIO:Float = 16.0 / 9.0;
     const IMAGE_WIDTH:i32 = 400;
     const IMAGE_HEIGHT:i32 = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as i32;
     const SAMPLES_PER_PIXEL:i32 = 100;
+    const MAX_DEPTH: i32 = 50;
 
     // World
     let mut world = HittableList::new();
@@ -47,10 +48,10 @@ fn main() {
         for i in 0..IMAGE_WIDTH {
             let mut pixel_color = Color::zero();
             for _ in 0..SAMPLES_PER_PIXEL {
-                let u = ((i as Float) + rand01.get()) / ((IMAGE_WIDTH-1) as Float);
-                let v = ((j as Float) + rand01.get()) / ((IMAGE_HEIGHT-1) as Float);
+                let u = ((i as Float) + rng.get()) / ((IMAGE_WIDTH-1) as Float);
+                let v = ((j as Float) + rng.get()) / ((IMAGE_HEIGHT-1) as Float);
                 let r: Ray = cam.get_ray(u, v);
-                pixel_color += r.color(&world);
+                pixel_color += r.color(&world, &mut rng, MAX_DEPTH);
             }
             pixel_color.write_color(SAMPLES_PER_PIXEL);
         }
@@ -59,9 +60,16 @@ fn main() {
 }
 
 impl Ray {
-    pub fn color(&self, world:&dyn Hittable) -> Color {
+    pub fn color(&self, world:&dyn Hittable, rng:&mut RngGen, depth: i32) -> Color {
+        if depth <= 0 {
+            return Color::zero();
+        }
+
         if let Some(hit) = world.hit(self, 0.0, Float::INFINITY) {
-            return 0.5 * (hit.normal() + Color::one());
+            let target = hit.p() + hit.normal() + Vec3::random_sphere(rng);
+            let ref new_dir = target - hit.p();
+            let ref new_ray = Ray::new(hit.p(), new_dir);
+            return 0.5 * Ray::color(new_ray, world, rng, depth-1);
         }
 
         let unit_direction: Vec3 = self.direction().unit_vector();
