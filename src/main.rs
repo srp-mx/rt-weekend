@@ -44,8 +44,10 @@ fn main() {
 impl Ray {
     pub fn color(&self) -> Color {
         let center = Point3::new(FLOAT_ZERO, FLOAT_ZERO, -FLOAT_ONE);
-        if hit_sphere(&center, FLOAT_TWO.recip(), &self) {
-            return Color::new(FLOAT_ONE, FLOAT_ZERO, FLOAT_ZERO);
+        let t = hit_sphere(&center, FLOAT_TWO.recip(), &self);
+        if t > FLOAT_ZERO {
+            let n = (self.at(t) - Vec3::new(FLOAT_ZERO, FLOAT_ZERO, -FLOAT_ONE)).unit_vector();
+            return Color::new(n.x()+FLOAT_ONE, n.y()+FLOAT_ONE, n.z()+FLOAT_ONE) / FLOAT_TWO;
         }
         let unit_direction: Vec3 = self.direction().unit_vector();
         let t = (0.5 as Float) * (unit_direction.y() + FLOAT_ONE);
@@ -55,11 +57,15 @@ impl Ray {
     }
 }
 
-fn hit_sphere(center:&Point3, radius:Float, r:&Ray) -> bool {
+fn hit_sphere(center:&Point3, radius:Float, r:&Ray) -> Float {
     let oc: Vec3 = r.origin() - center;
     let a = Vec3::dot(r.direction(), r.direction());
     let b = FLOAT_TWO * Vec3::dot(&oc, r.direction());
     let c = Vec3::dot(&oc, &oc) - radius*radius;
     let discriminant = b*b - (4 as Float)*a*c;
-    discriminant > FLOAT_ZERO
+    if discriminant < FLOAT_ZERO {
+        -FLOAT_ONE
+    } else {
+        (-b - discriminant.sqrt()) / (FLOAT_TWO * a)
+    }
 }
