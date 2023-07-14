@@ -16,7 +16,7 @@ impl Color {
     }
 
     fn to_color(input: Float, scale: Float) -> i32 {
-        (256.0 * (input * scale).clamp(0.0, 0.999)) as i32
+        (256.0 * (input * scale).sqrt().clamp(0.0, 0.999)) as i32
     }
 
     pub fn write_color(&self, samples_per_pixel: i32) {
