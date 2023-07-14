@@ -43,10 +43,23 @@ fn main() {
 
 impl Ray {
     pub fn color(&self) -> Color {
+        let center = Point3::new(FLOAT_ZERO, FLOAT_ZERO, -FLOAT_ONE);
+        if hit_sphere(&center, FLOAT_TWO.recip(), &self) {
+            return Color::new(FLOAT_ONE, FLOAT_ZERO, FLOAT_ZERO);
+        }
         let unit_direction: Vec3 = self.direction().unit_vector();
         let t = (0.5 as Float) * (unit_direction.y() + FLOAT_ONE);
         let c1 = Color::new(FLOAT_ONE, FLOAT_ONE, FLOAT_ONE);
         let c2 = Color::new(0.5 as Float, 0.7 as Float, 1.0 as Float);
         Vec3::lerp(&c1, &c2, t)
     }
+}
+
+fn hit_sphere(center:&Point3, radius:Float, r:&Ray) -> bool {
+    let oc: Vec3 = r.origin() - center;
+    let a = Vec3::dot(r.direction(), r.direction());
+    let b = FLOAT_TWO * Vec3::dot(&oc, r.direction());
+    let c = Vec3::dot(&oc, &oc) - radius*radius;
+    let discriminant = b*b - (4 as Float)*a*c;
+    discriminant > FLOAT_ZERO
 }
