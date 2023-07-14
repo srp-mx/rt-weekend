@@ -8,7 +8,7 @@ pub struct Vec3 {
 
 impl Vec3 {
     pub fn zero() -> Self {
-        Self::new(float_zero(), float_zero(), float_zero())
+        Self::new(FLOAT_ZERO, FLOAT_ZERO, FLOAT_ZERO)
     }
 
     pub fn new(x: Float, y: Float, z:Float) -> Self {
@@ -54,19 +54,65 @@ impl Vec3 {
     pub fn unit_vector(&self) -> Self {
         self / self.length()
     }
+
+    pub fn lerp(orig:&Self, dest:&Self, t:Float) -> Vec3 {
+        (FLOAT_ONE - t) * orig + t * dest
+    }
 }
 
 impl std::ops::Add<&Vec3> for &Vec3 {
     type Output = Vec3;
-    fn add(self, rhs: &Vec3) -> Vec3 {
+    fn add(self, rhs: &Vec3) -> Self::Output {
         Vec3::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
+    }
+}
+
+impl std::ops::Add<Vec3> for Vec3 {
+    type Output = Vec3;
+    fn add(self, rhs: Vec3) -> Self::Output {
+        &self + &rhs
+    }
+}
+
+impl std::ops::Add<Vec3> for &Vec3 {
+    type Output = Vec3;
+    fn add(self, rhs: Vec3) -> Self::Output {
+        self + &rhs
+    }
+}
+
+impl std::ops::Add<&Vec3> for Vec3 {
+    type Output = Vec3;
+    fn add(self, rhs: &Vec3) -> Self::Output {
+        &self + rhs
     }
 }
 
 impl std::ops::Sub<&Vec3> for &Vec3 {
     type Output = Vec3;
-    fn sub(self, rhs: &Vec3) -> Vec3 {
+    fn sub(self, rhs: &Vec3) -> Self::Output {
         Vec3::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
+    }
+}
+
+impl std::ops::Sub<Vec3> for Vec3 {
+    type Output = Vec3;
+    fn sub(self, rhs: Vec3) -> Self::Output {
+        &self - &rhs
+    }
+}
+
+impl std::ops::Sub<Vec3> for &Vec3 {
+    type Output = Vec3;
+    fn sub(self, rhs: Vec3) -> Self::Output {
+        self - &rhs
+    }
+}
+
+impl std::ops::Sub<&Vec3> for Vec3 {
+    type Output = Vec3;
+    fn sub(self, rhs: &Vec3) -> Self::Output {
+        &self - rhs
     }
 }
 
@@ -77,10 +123,38 @@ impl std::ops::Mul<&Vec3> for &Vec3 {
     }
 }
 
+impl std::ops::Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        &self * &rhs
+    }
+}
+
+impl std::ops::Mul<Vec3> for &Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        self * &rhs
+    }
+}
+
+impl std::ops::Mul<&Vec3> for Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: &Vec3) -> Self::Output {
+        &self * rhs
+    }
+}
+
 impl std::ops::Mul<&Vec3> for Float {
     type Output = Vec3;
     fn mul(self, rhs: &Vec3) -> Self::Output {
         Vec3::new(rhs.x * self, rhs.y * self, rhs.z * self)
+    }
+}
+
+impl std::ops::Mul<Vec3> for Float {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        self * &rhs
     }
 }
 
@@ -91,7 +165,21 @@ impl std::ops::Mul<Float> for &Vec3 {
     }
 }
 
+impl std::ops::Mul<Float> for Vec3 {
+    type Output = Vec3;
+    fn mul(self, rhs: Float) -> Self::Output {
+        rhs * self
+    }
+}
+
 impl std::ops::Div<Float> for &Vec3 {
+    type Output = Vec3;
+    fn div(self, rhs: Float) -> Self::Output {
+        rhs.recip() * self
+    }
+}
+
+impl std::ops::Div<Float> for Vec3 {
     type Output = Vec3;
     fn div(self, rhs: Float) -> Self::Output {
         rhs.recip() * self
