@@ -33,6 +33,19 @@ impl Vec3 {
         }
     }
 
+    pub fn random_unit(rng: &mut RngGen) -> Self {
+        Self::random_sphere(rng).unit_vector()
+    }
+
+    pub fn random_hemisphere(rng: &mut RngGen, normal: &Vec3) -> Self {
+        let in_sphere = Self::random_sphere(rng);
+        return if Self::dot(&in_sphere, normal) > 0.0 {
+            in_sphere
+        } else {
+            -in_sphere
+        }
+    }
+
     pub fn new(x: Float, y: Float, z:Float) -> Self {
         Self { x, y, z }
     }
