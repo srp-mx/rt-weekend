@@ -15,6 +15,10 @@ impl Vec3 {
         Self { x, y, z }
     }
 
+    pub fn copy(&self) -> Self {
+        Self::new(self.x, self.y, self.z)
+    }
+
     pub fn x(&self) -> Float {
         self.x
     }

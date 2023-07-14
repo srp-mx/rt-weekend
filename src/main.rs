@@ -1,11 +1,13 @@
 pub mod float;
 pub mod vec3;
 pub mod color;
+pub mod ray;
 
+use float::Float;
 use vec3::Vec3;
 use color::Color;
-use float::Float;
 type Point3 = Vec3;
+use ray::Ray;
 
 fn main() {
     // Image
