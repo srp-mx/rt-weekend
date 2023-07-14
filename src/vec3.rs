@@ -8,7 +8,11 @@ pub struct Vec3 {
 
 impl Vec3 {
     pub fn zero() -> Self {
-        Self::new(FLOAT_ZERO, FLOAT_ZERO, FLOAT_ZERO)
+        Self::new(0.0, 0.0, 0.0)
+    }
+
+    pub fn one() -> Self {
+        Self::new(1.0, 1.0, 1.0)
     }
 
     pub fn new(x: Float, y: Float, z:Float) -> Self {
@@ -56,7 +60,7 @@ impl Vec3 {
     }
 
     pub fn lerp(orig:&Self, dest:&Self, t:Float) -> Vec3 {
-        (FLOAT_ONE - t) * orig + t * dest
+        (1.0 - t) * orig + t * dest
     }
 }
 
@@ -183,6 +187,20 @@ impl std::ops::Div<Float> for Vec3 {
     type Output = Vec3;
     fn div(self, rhs: Float) -> Self::Output {
         rhs.recip() * self
+    }
+}
+
+impl std::ops::Neg for &Vec3 {
+    type Output = Vec3;
+    fn neg(self) -> Self::Output {
+        Vec3::new(-self.x, -self.y, -self.z)
+    }
+}
+
+impl std::ops::Neg for Vec3 {
+    type Output = Vec3;
+    fn neg(self) -> Self::Output {
+        -&self
     }
 }
 
