@@ -1,11 +1,14 @@
+use std::rc::Rc; // NOTE(srp): Considera cambiar por std::sync::Arc
 use super::float::*;
 use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::ray::Ray;
+use super::material::{Material, NullMaterial};
 
 pub struct HitRecord {
     p: Point3,
     normal: Vec3,
+    mat: Rc<dyn Material>,
     pub t: Float,
     pub front_face: bool,
 }
@@ -15,6 +18,7 @@ impl HitRecord {
         Self {
             p: Point3::zero(),
             normal: Vec3::zero(),
+            mat: Rc::new(NullMaterial),
             t: -1.0,
             front_face: false,
         }
@@ -32,6 +36,10 @@ impl HitRecord {
         &(self.normal)
     }
 
+    pub fn mat(&self) -> &dyn Material {
+        self.mat.as_ref()
+    }
+
     pub fn t(&self) -> Float {
         self.t
     }
@@ -43,6 +51,10 @@ impl HitRecord {
         } else {
             -outward_normal
         }
+    }
+
+    pub fn set_mat(&mut self, mat: Rc<dyn Material>) {
+        self.mat = mat;
     }
 
 }

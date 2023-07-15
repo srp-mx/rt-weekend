@@ -93,6 +93,15 @@ impl Vec3 {
     pub fn lerp(orig:&Self, dest:&Self, t:Float) -> Vec3 {
         (1.0 - t) * orig + t * dest
     }
+
+    pub fn near_zero(&self) -> bool {
+        const THRESHOLD: Float = 1e-8;
+        self.x.abs() < THRESHOLD && self.y.abs() < THRESHOLD && self.z.abs() < THRESHOLD
+    }
+
+    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+        v - 2.0*Self::dot(v, n)*n
+    }
 }
 
 impl std::ops::Add<&Vec3> for &Vec3 {

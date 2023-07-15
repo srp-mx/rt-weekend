@@ -7,6 +7,9 @@ pub mod sphere;
 pub mod hittable_list;
 pub mod rng_float;
 pub mod camera;
+pub mod material;
+pub mod lambertian;
+pub mod metal;
 
 use std::rc::Rc;
 use float::*;
@@ -19,6 +22,9 @@ use sphere::Sphere;
 use hittable_list::HittableList;
 use rng_float::RngGen;
 use camera::Camera;
+use material::Scatter;
+use metal::Metal;
+use lambertian::Lambertian;
 
 fn main() {
     // RNG
@@ -33,10 +39,21 @@ fn main() {
 
     // World
     let mut world = HittableList::new();
-    let sphere1: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5));
-    let sphere2: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0));
-    world.add(&sphere1);
-    world.add(&sphere2);
+
+    let mat_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let mat_center = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
+    let mat_left = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8)));
+    let mat_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2)));
+
+    let ground_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground.clone()));
+    let center_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center.clone()));
+    let left_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
+    let right_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right.clone()));
+
+    world.add(ground_sphere.clone());
+    world.add(center_sphere.clone());
+    world.add(left_sphere.clone());
+    world.add(right_sphere.clone());
 
     // Camera
     let cam = Camera::new();
@@ -51,7 +68,7 @@ fn main() {
                 let u = ((i as Float) + rng.get()) / ((IMAGE_WIDTH-1) as Float);
                 let v = ((j as Float) + rng.get()) / ((IMAGE_HEIGHT-1) as Float);
                 let r: Ray = cam.get_ray(u, v);
-                pixel_color += r.color(&world, &mut rng, MAX_DEPTH);
+                pixel_color += r.color(&world, MAX_DEPTH, &mut rng);
             }
             pixel_color.write_color(SAMPLES_PER_PIXEL);
         }
@@ -60,16 +77,17 @@ fn main() {
 }
 
 impl Ray {
-    pub fn color(&self, world:&dyn Hittable, rng:&mut RngGen, depth: i32) -> Color {
+    pub fn color(&self, world:&dyn Hittable, depth: i32, rng:&mut RngGen) -> Color {
         if depth <= 0 {
             return Color::zero();
         }
 
         if let Some(hit) = world.hit(self, 0.001, Float::INFINITY) {
-            let target = hit.p() + Vec3::random_hemisphere(rng, hit.normal());
-            let ref new_dir = target - hit.p();
-            let ref new_ray = Ray::new(hit.p(), new_dir);
-            return 0.5 * Ray::color(new_ray, world, rng, depth-1);
+            return if let Scatter::Some(scatter_ray, scatter_color) = hit.mat().scatter(&self, &hit, rng) {
+                scatter_color * Ray::color(&scatter_ray, world, depth-1, rng)
+            } else {
+                Color::zero()
+            }
         }
 
         let unit_direction: Vec3 = self.direction().unit_vector();

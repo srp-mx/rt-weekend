@@ -17,8 +17,8 @@ impl HittableList {
         self.objects.clear();
     }
 
-    pub fn add(&mut self, object: &Rc<dyn Hittable>) {
-        self.objects.push(object.clone());
+    pub fn add(&mut self, object: Rc<dyn Hittable>) {
+        self.objects.push(object);
     }
 }
 
