@@ -10,6 +10,7 @@ pub mod camera;
 pub mod material;
 pub mod lambertian;
 pub mod metal;
+pub mod dielectric;
 
 use std::rc::Rc;
 use float::*;
@@ -25,6 +26,7 @@ use camera::Camera;
 use material::Scatter;
 use metal::Metal;
 use lambertian::Lambertian;
+use dielectric::Dielectric;
 
 fn main() {
     // RNG
@@ -41,8 +43,8 @@ fn main() {
     let mut world = HittableList::new();
 
     let mat_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let mat_center = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
-    let mat_left = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.3));
+    let mat_center = Rc::new(Dielectric::new(1.5));
+    let mat_left = Rc::new(Dielectric::new(1.5));
     let mat_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
 
     let ground_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground.clone()));
