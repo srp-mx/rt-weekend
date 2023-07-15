@@ -46,6 +46,15 @@ impl Vec3 {
         }
     }
 
+    pub fn random_unit_xy(rng: &mut RngGen) -> Self {
+        loop {
+            let p = Self::new(rng.range(-1.0,1.0), rng.range(-1.0,1.0), 0.0);
+            if p.length_squared() < 1.0 {
+                break p;
+            }
+        }
+    }
+
     pub fn new(x: Float, y: Float, z:Float) -> Self {
         Self { x, y, z }
     }

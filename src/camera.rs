@@ -2,31 +2,40 @@ use super::float::*;
 use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::ray::Ray;
+use super::rng_float::RngGen;
 
 pub struct Camera {
     origin: Point3,
     lower_left_corner: Point3,
     horizontal: Vec3,
     vertical: Vec3,
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
+    lens_radius: Float,
 }
 
 pub struct CameraBuilder {
-    vertical_fov: Float,
-    aspect_ratio: Float,
     lookfrom: Point3,
     lookat: Point3,
     view_up: Vec3,
+    vertical_fov: Float,
+    aspect_ratio: Float,
+    aperture: Float,
+    focus_dist: Float,
 }
 
 impl CameraBuilder {
     pub fn new() -> Self {
-        CameraBuilder {
-            lookfrom: Point3::new(-2.0, 2.0, 1.0),
-            lookat: Point3::new(0.0, 0.0, -1.0),
-            view_up: Vec3::new(0.0, 1.0, 0.0),
-            vertical_fov: 90.0,
-            aspect_ratio: 16.0 / 9.0,
-        }
+        let lookfrom = Point3::new(3.0, 3.0, 2.0);
+        let lookat = Point3::new(0.0, 0.0, -1.0);
+        let view_up = Vec3::new(0.0, 1.0, 0.0);
+        let vertical_fov: Float = 20.0;
+        let aspect_ratio: Float = 16.0 / 9.0;
+        let aperture: Float = 2.0;
+        let focus_dist = (&lookfrom - &lookat).length();
+
+        CameraBuilder { lookfrom, lookat, view_up, vertical_fov, aspect_ratio, aperture, focus_dist }
     }
 
     pub fn lookfrom(&mut self, lookfrom: Point3) -> &mut Self {
@@ -71,18 +80,21 @@ impl Camera {
         let v = Vec3::cross(&w, &u);
 
         let origin = data.lookfrom;
-        let horizontal = viewport_width * u;
-        let vertical = viewport_height * v;
-        let lower_left_corner = &origin - &horizontal/2.0 - &vertical/2.0 - w;
+        let horizontal = &data.focus_dist * viewport_width * &u;
+        let vertical = &data.focus_dist * viewport_height * &v;
+        let lower_left_corner = &origin - &horizontal/2.0 - &vertical/2.0 - data.focus_dist*&w;
+        let lens_radius = data.aperture / 2.0;
 
-        Camera { origin, horizontal, vertical, lower_left_corner }
+        Camera { origin, lower_left_corner, horizontal, vertical, u, v, w, lens_radius }
     }
 
-    fn get_ray_dir(&self, s: Float, t: Float) -> Vec3 {
-        &self.lower_left_corner + s*&self.horizontal + t*&self.vertical - &self.origin
+    fn get_ray_dir(&self, s: Float, t: Float, offset: &Vec3) -> Vec3 {
+        &self.lower_left_corner + s*&self.horizontal + t*&self.vertical - &self.origin - offset
     }
 
-    pub fn get_ray(&self, s: Float, t: Float) -> Ray {
-        Ray::new(&self.origin, &self.get_ray_dir(s, t))
+    pub fn get_ray(&self, s: Float, t: Float, rng: &mut RngGen) -> Ray {
+        let rd: Vec3 = self.lens_radius * Vec3::random_unit_xy(rng);
+        let offset: Vec3 = &self.u*rd.x() + &self.v*rd.y();
+        Ray::new(&(&self.origin + &offset), &self.get_ray_dir(s, t, &offset))
     }
 }

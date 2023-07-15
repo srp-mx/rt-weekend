@@ -71,7 +71,7 @@ fn main() {
             for _ in 0..SAMPLES_PER_PIXEL {
                 let u = ((i as Float) + rng.get()) / ((IMAGE_WIDTH-1) as Float);
                 let v = ((j as Float) + rng.get()) / ((IMAGE_HEIGHT-1) as Float);
-                let r: Ray = cam.get_ray(u, v);
+                let r: Ray = cam.get_ray(u, v, &mut rng);
                 pixel_color += r.color(&world, MAX_DEPTH, &mut rng);
             }
             pixel_color.write_color(SAMPLES_PER_PIXEL);
