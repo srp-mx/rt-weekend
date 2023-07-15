@@ -63,23 +63,33 @@ impl CameraBuilder {
         self
     }
 
-    pub fn build(self) -> Camera {
+    pub fn aperture(&mut self, aperture: Float) -> &mut Self {
+        self.aperture = aperture;
+        self
+    }
+
+    pub fn focus_dist(&mut self, focus_dist: Float) -> &mut Self {
+        self.focus_dist = focus_dist;
+        self
+    }
+
+    pub fn build(&self) -> Camera {
         Camera::new(self)
     }
 }
 
 impl Camera {
-    fn new(data: CameraBuilder) -> Self {
+    fn new(data: &CameraBuilder) -> Self {
         let theta = data.vertical_fov.to_radians();
         let h = (theta * 0.5).tan();
         let viewport_height: Float = 2.0 * h;
         let viewport_width: Float = data.aspect_ratio * viewport_height;
         
-        let w = (&data.lookfrom - data.lookat).unit_vector();
+        let w = (&data.lookfrom - &data.lookat).unit_vector();
         let u = Vec3::cross(&data.view_up, &w).unit_vector();
         let v = Vec3::cross(&w, &u);
 
-        let origin = data.lookfrom;
+        let origin = data.lookfrom.copy();
         let horizontal = &data.focus_dist * viewport_width * &u;
         let vertical = &data.focus_dist * viewport_height * &v;
         let lower_left_corner = &origin - &horizontal/2.0 - &vertical/2.0 - data.focus_dist*&w;

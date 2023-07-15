@@ -27,40 +27,28 @@ use material::Scatter;
 use metal::Metal;
 use lambertian::Lambertian;
 use dielectric::Dielectric;
+use material::Material;
 
 fn main() {
     // RNG
     let mut rng = RngGen::new();
 
     // Image
-    const ASPECT_RATIO:Float = 16.0 / 9.0;
-    const IMAGE_WIDTH:i32 = 400;
+    const ASPECT_RATIO:Float = 3.0 / 2.0;
+    const IMAGE_WIDTH:i32 = 1200;
     const IMAGE_HEIGHT:i32 = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as i32;
-    const SAMPLES_PER_PIXEL:i32 = 100;
+    const SAMPLES_PER_PIXEL:i32 = 500;
     const MAX_DEPTH: i32 = 50;
 
     // World
-    let mut world = HittableList::new();
-
-    let mat_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let mat_center = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
-    let mat_left = Rc::new(Dielectric::new(1.5));
-    let mat_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
-
-    let ground_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground.clone()));
-    let center_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center.clone()));
-    let left_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
-    let left_inner_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left.clone()));
-    let right_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right.clone()));
-
-    world.add(ground_sphere.clone());
-    world.add(center_sphere.clone());
-    world.add(left_sphere.clone());
-    world.add(left_inner_sphere.clone());
-    world.add(right_sphere.clone());
+    let world = random_scene(&mut rng);
 
     // Camera
-    let cam: Camera = CameraBuilder::new().build();
+    let cam: Camera = CameraBuilder::new()
+        .lookfrom(Vec3::new(12.0, 2.0, 3.0))
+        .focus_dist(10.0)
+        .aperture(0.1)
+        .build();
 
     // Render
     print!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
@@ -100,4 +88,47 @@ impl Ray {
         let c2 = Color::new(0.5, 0.7, 1.0);
         Vec3::lerp(&c1, &c2, t)
     }
+}
+
+fn random_scene(rng: &mut RngGen) -> HittableList {
+    let mut world = HittableList::new();
+
+    let ground_mat = Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+    let ground: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0,-1000.0,0.0), 1000.0, ground_mat));
+    world.add(ground);
+
+    for a in -11..12 {
+        for b in -11..12 {
+            let choose_mat = rng.get();
+            let center = Point3::new(a as Float + 0.9*rng.get(), 0.2, b as Float + 0.9*rng.get());
+            
+            if (&center - &Point3::new(4.0, 0.2, 0.0)).length() <= 0.9 {
+                continue;
+            }
+
+            let sphere_mat: Rc<dyn Material> = if choose_mat < 0.8 {
+                Rc::new(Lambertian::new(Color::random(rng) * Color::random(rng)))
+            } else if choose_mat < 0.95 {
+                Rc::new(Metal::new(Color::random_range(rng, 0.5, 1.0), rng.range(0.0, 0.5)))
+            } else {
+                Rc::new(Dielectric::new(1.5))
+            };
+
+            world.add(Rc::new(Sphere::new(center, 0.2, sphere_mat)));
+        }
+    }
+
+    let mat1: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
+    let sph1: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0,1.0,0.0), 1.0, mat1));
+    world.add(sph1);
+
+    let mat2: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+    let sph2: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-4.0,1.0,0.0), 1.0, mat2));
+    world.add(sph2);
+
+    let mat3: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
+    let sph3: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(4.0,1.0,0.0), 1.0, mat3));
+    world.add(sph3);
+
+    world
 }
