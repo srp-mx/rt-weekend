@@ -22,7 +22,7 @@ use hittable::*;
 use sphere::Sphere;
 use hittable_list::HittableList;
 use rng_float::RngGen;
-use camera::Camera;
+use camera::{Camera, CameraBuilder};
 use material::Scatter;
 use metal::Metal;
 use lambertian::Lambertian;
@@ -60,7 +60,7 @@ fn main() {
     world.add(right_sphere.clone());
 
     // Camera
-    let cam = Camera::new();
+    let cam: Camera = CameraBuilder::new().build();
 
     // Render
     print!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
