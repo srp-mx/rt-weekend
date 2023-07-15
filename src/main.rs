@@ -46,8 +46,10 @@ fn main() {
     // Camera
     let cam: Camera = CameraBuilder::new()
         .lookfrom(Vec3::new(12.0, 2.0, 3.0))
+        .vertical_fov(20.0)
         .focus_dist(10.0)
         .aperture(0.1)
+        .aspect_ratio(ASPECT_RATIO)
         .build();
 
     // Render
