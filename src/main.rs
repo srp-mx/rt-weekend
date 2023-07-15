@@ -50,11 +50,13 @@ fn main() {
     let ground_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, mat_ground.clone()));
     let center_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, mat_center.clone()));
     let left_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, mat_left.clone()));
+    let left_inner_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, mat_left.clone()));
     let right_sphere: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, mat_right.clone()));
 
     world.add(ground_sphere.clone());
     world.add(center_sphere.clone());
     world.add(left_sphere.clone());
+    world.add(left_inner_sphere.clone());
     world.add(right_sphere.clone());
 
     // Camera
