@@ -99,8 +99,16 @@ impl Vec3 {
         self.x.abs() < THRESHOLD && self.y.abs() < THRESHOLD && self.z.abs() < THRESHOLD
     }
 
-    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-        v - 2.0*Self::dot(v, n)*n
+    pub fn reflect(&self, n: &Vec3) -> Vec3 {
+        self - 2.0*Self::dot(self, n)*n
+    }
+
+    // NOTE(srp): refraction_ratio := $\frac{\eta_i}{\eta_t}$
+    pub fn refract(&self, n: &Vec3, refraction_ratio: Float) -> Vec3 {
+        let cos_theta = Vec3::dot(&-self, n).min(1.0);
+        let r_out_perp = refraction_ratio * (self + cos_theta*n);
+        let r_out_parallel = -n * (1.0 - r_out_perp.length_squared()).abs().sqrt();
+        r_out_perp + r_out_parallel
     }
 }
 

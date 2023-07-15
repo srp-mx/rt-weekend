@@ -14,15 +14,6 @@ impl Dielectric {
     pub fn new(ior: Float) -> Self {
         Self { ior }
     }
-
-    // NOTE(srp): eta_ratio := $\frac{\eta_i}{\eta_t}$
-    fn refract(uv: &Vec3, n: &Vec3, eta_ratio: Float) -> Vec3 {
-        let cos_theta = Vec3::dot(&-uv, n).min(1.0);
-        let r_out_perp = eta_ratio * (uv + cos_theta*n);
-        let r_out_parallel = -n * (1.0 - r_out_perp.length_squared()).abs().sqrt();
-        r_out_perp + r_out_parallel
-    }
-
 }
 
 impl Material for Dielectric {
@@ -34,10 +25,17 @@ impl Material for Dielectric {
             self.ior
         };
 
-        let unit_direction: Vec3 = r_in.direction().unit_vector();
-        let refracted: Vec3 = Self::refract(&unit_direction, hit.normal(), refraction_ratio);
-        let new_ray = Ray::new(hit.p(), &refracted);
+        let ref unit_direction: Vec3 = r_in.direction().unit_vector();
+        let cos_theta = Vec3::dot(&-unit_direction, hit.normal()).min(1.0);
+        let sin_theta = (1.0 - cos_theta*cos_theta).sqrt();
 
+        let direction: Vec3 = if refraction_ratio * sin_theta > 1.0 {
+            unit_direction.reflect(hit.normal())
+        } else {
+            unit_direction.refract(hit.normal(), refraction_ratio)
+        };
+
+        let new_ray = Ray::new(hit.p(), &direction);
         Scatter::Some(new_ray, new_color)
     }
 }
