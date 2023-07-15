@@ -11,6 +11,7 @@ pub mod material;
 pub mod lambertian;
 pub mod metal;
 pub mod dielectric;
+pub mod pixel_buffer;
 
 use std::rc::Rc;
 use float::*;
@@ -28,6 +29,7 @@ use metal::Metal;
 use lambertian::Lambertian;
 use dielectric::Dielectric;
 use material::Material;
+use pixel_buffer::PixelBuffer;
 
 fn main() {
     // RNG
@@ -35,10 +37,13 @@ fn main() {
 
     // Image
     const ASPECT_RATIO:Float = 3.0 / 2.0;
-    const IMAGE_WIDTH:i32 = 1200;
-    const IMAGE_HEIGHT:i32 = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as i32;
-    const SAMPLES_PER_PIXEL:i32 = 500;
-    const MAX_DEPTH: i32 = 50;
+    const IMAGE_WIDTH:usize = 300;
+    const IMAGE_HEIGHT:usize = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as usize;
+    const SAMPLES_PER_PIXEL:i32 = 16;
+    const MAX_DEPTH: i32 = 8;
+
+    // Pixel Buffer
+    let mut buffer = PixelBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT);
 
     // World
     let world = random_scene(&mut rng);
@@ -53,7 +58,6 @@ fn main() {
         .build();
 
     // Render
-    print!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
     for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\nScanlines remaining: {}\n", j+1);
         for i in 0..IMAGE_WIDTH {
@@ -64,9 +68,12 @@ fn main() {
                 let r: Ray = cam.get_ray(u, v, &mut rng);
                 pixel_color += r.color(&world, MAX_DEPTH, &mut rng);
             }
-            pixel_color.write_color(SAMPLES_PER_PIXEL);
+            buffer.set_pixel(i, j, &pixel_color, SAMPLES_PER_PIXEL);
         }
     }
+    eprint!("\nWriting output.\n");
+    let ppm_output = buffer.to_ppm();
+    print!("{ppm_output}");
     eprint!("\nDone.\n");
 }
 

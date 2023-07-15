@@ -19,9 +19,11 @@ impl Color {
         (256.0 * (input * scale).sqrt().clamp(0.0, 0.999)) as i32
     }
 
-    pub fn write_color(&self, samples_per_pixel: i32) {
+    pub fn output_32bit(&self, samples_per_pixel: i32) -> u32 {
         let s = (samples_per_pixel as Float).recip();
-        print!("{} {} {}\n", self.r(s), self.g(s), self.b(s));
+        let r = (self.r(s) as u32) << (8*2);
+        let g = (self.g(s) as u32) << 8;
+        r | g | self.b(s) as u32
     }
 }
 
