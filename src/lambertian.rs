@@ -16,14 +16,14 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _r_in: &Ray, hit: &HitRecord, rng: &mut RngGen) -> Scatter {
+    fn scatter(&self, r_in: &Ray, hit: &HitRecord, rng: &mut RngGen) -> Scatter {
         let mut dir = hit.normal() + Vec3::random_unit(rng);
 
         if dir.near_zero() {
             dir = hit.normal().copy();
         }
 
-        let new_ray = Ray::new(hit.p(), &dir);
+        let new_ray = Ray::new(hit.p(), &dir, r_in.time());
         let new_color = self.albedo.copy();
         return Scatter::Some(new_ray, new_color)
     }

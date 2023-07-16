@@ -21,7 +21,7 @@ impl Material for Metal {
     fn scatter(&self, r_in: &Ray, hit: &HitRecord, rng: &mut RngGen) -> Scatter {
         let reflect = Vec3::reflect(&r_in.direction().unit_vector(), hit.normal());
         let fuzz_offset = self.fuzz * &Vec3::random_sphere(rng);
-        let new_ray = Ray::new(hit.p(), &(&reflect + fuzz_offset));
+        let new_ray = Ray::new(hit.p(), &(&reflect + fuzz_offset), r_in.time());
         return if Vec3::dot(new_ray.direction(), hit.normal()) > 0.0 {
             Scatter::Some(new_ray, self.albedo.copy())
         } else {

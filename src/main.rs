@@ -12,6 +12,7 @@ pub mod lambertian;
 pub mod metal;
 pub mod dielectric;
 pub mod pixel_buffer;
+pub mod moving_sphere;
 
 use std::rc::Rc;
 use float::*;
@@ -30,6 +31,7 @@ use lambertian::Lambertian;
 use dielectric::Dielectric;
 use material::Material;
 use pixel_buffer::PixelBuffer;
+use moving_sphere::MovingSphere;
 
 use minifb::{Window, WindowOptions};
 use std::sync::RwLock;
@@ -41,11 +43,11 @@ fn main() {
     let mut rng = RngGen::new();
 
     // Image
-    const ASPECT_RATIO:Float = 3.0 / 2.0;
+    const ASPECT_RATIO:Float = 16.0 / 9.0;
     const IMAGE_WIDTH:usize = 300;
     const IMAGE_HEIGHT:usize = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL:i32 = 16;
-    const MAX_DEPTH: i32 = 8;
+    const SAMPLES_PER_PIXEL:i32 = 50;
+    const MAX_DEPTH: i32 = 12;
 
     // Pixel Buffer
     let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT)));
@@ -60,6 +62,8 @@ fn main() {
         .focus_dist(10.0)
         .aperture(0.1)
         .aspect_ratio(ASPECT_RATIO)
+        .shutter_open_time(0.0)
+        .shutter_close_time(1.0)
         .build();
 
     // Fast Render Pass for Preview
@@ -145,12 +149,14 @@ fn random_scene(rng: &mut RngGen) -> HittableList {
         for b in -11..12 {
             let choose_mat = rng.get();
             let center = Point3::new(a as Float + 0.9*rng.get(), 0.2, b as Float + 0.9*rng.get());
+            let mut center2 = center.copy();
             
             if (&center - &Point3::new(4.0, 0.2, 0.0)).length() <= 0.9 {
                 continue;
             }
 
             let sphere_mat: Rc<dyn Material> = if choose_mat < 0.8 {
+                center2 = &center + Vec3::new(0.0, rng.range(0.0, 0.5), 0.0);
                 Rc::new(Lambertian::new(Color::random(rng) * Color::random(rng)))
             } else if choose_mat < 0.95 {
                 Rc::new(Metal::new(Color::random_range(rng, 0.5, 1.0), rng.range(0.0, 0.5)))
@@ -158,7 +164,13 @@ fn random_scene(rng: &mut RngGen) -> HittableList {
                 Rc::new(Dielectric::new(1.5))
             };
 
-            world.add(Rc::new(Sphere::new(center, 0.2, sphere_mat)));
+            world.add(Rc::new(MovingSphere::new(
+                        center,
+                        center2,
+                        0.0,
+                        1.0,
+                        0.2,
+                        sphere_mat)));
         }
     }
 

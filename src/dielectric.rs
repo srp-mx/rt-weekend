@@ -45,7 +45,7 @@ impl Material for Dielectric {
             unit_direction.refract(hit.normal(), refraction_ratio)
         };
 
-        let new_ray = Ray::new(hit.p(), &direction);
+        let new_ray = Ray::new(hit.p(), &direction, r_in.time());
         Scatter::Some(new_ray, new_color)
     }
 }

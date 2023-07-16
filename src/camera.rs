@@ -13,6 +13,8 @@ pub struct Camera {
     v: Vec3,
     w: Vec3,
     lens_radius: Float,
+    shutter_open_time: Float,
+    shutter_close_time: Float,
 }
 
 pub struct CameraBuilder {
@@ -23,6 +25,8 @@ pub struct CameraBuilder {
     aspect_ratio: Float,
     aperture: Float,
     focus_dist: Float,
+    shutter_open_time: Float,
+    shutter_close_time: Float,
 }
 
 impl CameraBuilder {
@@ -34,8 +38,13 @@ impl CameraBuilder {
         let aspect_ratio: Float = 16.0 / 9.0;
         let aperture: Float = 2.0;
         let focus_dist = (&lookfrom - &lookat).length();
+        let shutter_open_time = 0.0;
+        let shutter_close_time = 0.0;
 
-        CameraBuilder { lookfrom, lookat, view_up, vertical_fov, aspect_ratio, aperture, focus_dist }
+        CameraBuilder {
+            lookfrom, lookat, view_up, vertical_fov, aspect_ratio,
+            aperture, focus_dist, shutter_open_time, shutter_close_time
+        }
     }
 
     pub fn lookfrom(&mut self, lookfrom: Point3) -> &mut Self {
@@ -73,6 +82,16 @@ impl CameraBuilder {
         self
     }
 
+    pub fn shutter_open_time(&mut self, shutter_open_time: Float) -> &mut Self {
+        self.shutter_open_time = shutter_open_time;
+        self
+    }
+
+    pub fn shutter_close_time(&mut self, shutter_close_time: Float) -> &mut Self {
+        self.shutter_close_time = shutter_close_time;
+        self
+    }
+
     pub fn build(&self) -> Camera {
         Camera::new(self)
     }
@@ -94,8 +113,13 @@ impl Camera {
         let vertical = &data.focus_dist * viewport_height * &v;
         let lower_left_corner = &origin - &horizontal/2.0 - &vertical/2.0 - data.focus_dist*&w;
         let lens_radius = data.aperture / 2.0;
+        let shutter_open_time = data.shutter_open_time;
+        let shutter_close_time = data.shutter_close_time;
 
-        Camera { origin, lower_left_corner, horizontal, vertical, u, v, w, lens_radius }
+        Camera {
+            origin, lower_left_corner, horizontal, vertical, u, v, w,
+            lens_radius, shutter_open_time, shutter_close_time
+        }
     }
 
     fn get_ray_dir(&self, s: Float, t: Float, offset: &Vec3) -> Vec3 {
@@ -105,6 +129,9 @@ impl Camera {
     pub fn get_ray(&self, s: Float, t: Float, rng: &mut RngGen) -> Ray {
         let rd: Vec3 = self.lens_radius * Vec3::random_unit_xy(rng);
         let offset: Vec3 = &self.u*rd.x() + &self.v*rd.y();
-        Ray::new(&(&self.origin + &offset), &self.get_ray_dir(s, t, &offset))
+        Ray::new(
+            &(&self.origin + &offset),
+            &self.get_ray_dir(s, t, &offset),
+            rng.range(self.shutter_open_time, self.shutter_close_time))
     }
 }
