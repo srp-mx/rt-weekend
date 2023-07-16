@@ -42,4 +42,12 @@ impl PixelBuffer {
     pub fn buffer(&self) -> &Vec<u32> {
         &self.buff
     }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
 }

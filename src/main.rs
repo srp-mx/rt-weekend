@@ -31,6 +31,10 @@ use dielectric::Dielectric;
 use material::Material;
 use pixel_buffer::PixelBuffer;
 
+use minifb::{Window, WindowOptions};
+use std::sync::RwLock;
+use std::sync::Arc;
+
 fn main() {
     // RNG
     let mut rng = RngGen::new();
@@ -43,7 +47,31 @@ fn main() {
     const MAX_DEPTH: i32 = 8;
 
     // Pixel Buffer
-    let mut buffer = PixelBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT);
+    let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT)));
+    let window_buffer_lock = buffer_lock.clone();
+
+    // Window
+    let preview_thread = std::thread::spawn(move || {
+        let mut window = Window::new(
+            "rt-weekend",
+            IMAGE_WIDTH,
+            IMAGE_HEIGHT,
+            WindowOptions::default(),
+        ).unwrap_or_else(|e| {
+            panic!("{}", e);
+        });
+
+        while window.is_open() {
+            let buffer = loop {
+                if let Ok(buffer) = window_buffer_lock.read() {
+                    break buffer
+                }
+            };
+            window.update_with_buffer(buffer.buffer(), buffer.width(), buffer.height()).unwrap();
+            std::mem::drop(buffer);
+            std::thread::sleep(std::time::Duration::from_millis(500));
+        }
+    });
 
     // World
     let world = random_scene(&mut rng);
@@ -68,13 +96,23 @@ fn main() {
                 let r: Ray = cam.get_ray(u, v, &mut rng);
                 pixel_color += r.color(&world, MAX_DEPTH, &mut rng);
             }
-            buffer.set_pixel(i, j, &pixel_color, SAMPLES_PER_PIXEL);
+
+            let mut buffer = loop {
+                if let Ok(buffer) = buffer_lock.write() {
+                    break buffer
+                }
+            };
+            buffer.set_pixel(i, IMAGE_HEIGHT-j-1, &pixel_color, SAMPLES_PER_PIXEL);
+            std::mem::drop(buffer);
         }
     }
+
     eprint!("\nWriting output.\n");
-    let ppm_output = buffer.to_ppm();
+    let ppm_output = buffer_lock.read().unwrap().to_ppm();
     print!("{ppm_output}");
     eprint!("\nDone.\n");
+
+    preview_thread.join().unwrap();
 }
 
 impl Ray {
