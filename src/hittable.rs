@@ -4,6 +4,7 @@ use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::ray::Ray;
 use super::material::{Material, NullMaterial};
+use super::aabb::AABB;
 
 pub struct HitRecord {
     p: Point3,
@@ -61,4 +62,5 @@ impl HitRecord {
 
 pub trait Hittable {
     fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord>;
+    fn bounding_box(&self, time0: Float, time1: Float) -> Option<AABB>;
 }

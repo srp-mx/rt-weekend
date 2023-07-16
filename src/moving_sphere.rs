@@ -4,6 +4,7 @@ type Point3 = Vec3;
 use super::material::Material;
 use super::hittable::{Hittable, HitRecord};
 use super::ray::Ray;
+use super::aabb::AABB;
 
 use std::rc::Rc;
 
@@ -66,5 +67,16 @@ impl Hittable for MovingSphere {
         rec.set_face_normal(r, outward_normal);
         rec.set_mat(self.mat.clone());
         Some(rec)
+    }
+
+    fn bounding_box(&self, time0: Float, time1: Float) -> Option<AABB> {
+        let ref radius_vec = Vec3::new(self.radius, self.radius, self.radius);
+
+        let ref center0 = self.center(time0);
+        let box0 = AABB::new(center0 - radius_vec, center0 + radius_vec);
+        let ref center1 = self.center(time1);
+        let box1 = AABB::new(center1 - radius_vec, center1 + radius_vec);
+
+        Some(AABB::joint_box(&box0, &box1))
     }
 }

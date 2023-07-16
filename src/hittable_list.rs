@@ -2,6 +2,7 @@ use std::rc::Rc;
 use super::float::*;
 use super::ray::*;
 use super::hittable::*;
+use super::aabb::AABB;
 
 // NOTE(srp): Podríamos querer cambiar Rc por std::sync::Arc
 pub struct HittableList {
@@ -38,5 +39,28 @@ impl Hittable for HittableList {
         }
 
         hit
+    }
+
+    fn bounding_box(&self, time0: Float, time1: Float) -> Option<AABB> {
+        let mut output: Option<AABB> = None;
+        let mut is_first_box = true;
+
+        for object in &self.objects {
+            match object.bounding_box(time0, time1) {
+                None => return None,
+                Some(current_box) => {
+                    if is_first_box {
+                        output = Some(current_box);
+                        is_first_box = false;
+                        continue;
+                    }
+                    if let Some(old_box) = output {
+                        output = Some(AABB::joint_box(&current_box, &old_box));
+                    }
+                }
+            }
+        }
+
+        output
     }
 }

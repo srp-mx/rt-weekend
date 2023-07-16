@@ -13,6 +13,7 @@ pub mod metal;
 pub mod dielectric;
 pub mod pixel_buffer;
 pub mod moving_sphere;
+pub mod aabb;
 
 use std::rc::Rc;
 use float::*;

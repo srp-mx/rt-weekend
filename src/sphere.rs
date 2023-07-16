@@ -4,6 +4,7 @@ use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::hittable::*;
 use super::material::Material;
+use super::aabb::AABB;
 
 pub struct Sphere {
     center: Point3,
@@ -58,5 +59,10 @@ impl Hittable for Sphere {
         rec.set_face_normal(r, outward_normal);
         rec.set_mat(self.mat.clone());
         Some(rec)
+    }
+
+    fn bounding_box(&self, _time0: Float, _time1: Float) -> Option<AABB> {
+        let ref radius_vec = Vec3::new(self.radius, self.radius, self.radius);
+        Some(AABB::new(self.center() - radius_vec, self.center() + radius_vec))
     }
 }
