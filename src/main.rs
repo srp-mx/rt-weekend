@@ -14,6 +14,8 @@ pub mod dielectric;
 pub mod pixel_buffer;
 pub mod moving_sphere;
 pub mod aabb;
+pub mod bvh;
+pub mod axis;
 
 use std::rc::Rc;
 use float::*;
@@ -33,6 +35,7 @@ use dielectric::Dielectric;
 use material::Material;
 use pixel_buffer::PixelBuffer;
 use moving_sphere::MovingSphere;
+use bvh::BVH;
 
 use minifb::{Window, WindowOptions};
 use std::sync::RwLock;
@@ -87,6 +90,7 @@ fn main() {
     let preview_thread = make_preview_window(buffer_lock.clone());
 
     // Render
+    let timer_start = std::time::Instant::now();
     eprintln!("\nGetting serious now >:)\n");
     for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\nScanlines remaining: {}\n", j+1);
@@ -108,11 +112,12 @@ fn main() {
             std::mem::drop(buffer);
         }
     }
+    let timer_duration = timer_start.elapsed(); 
 
     eprint!("\nWriting output.\n");
     let ppm_output = buffer_lock.read().unwrap().to_ppm();
     print!("{ppm_output}");
-    eprint!("\nDone.\n");
+    eprint!("\nDone.\nRendering took {:?}\n", timer_duration);
 
     preview_thread.join().unwrap();
 }
@@ -146,6 +151,8 @@ fn random_scene(rng: &mut RngGen) -> HittableList {
     let ground: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0,-1000.0,0.0), 1000.0, ground_mat));
     world.add(ground);
 
+    let mut balls_list = HittableList::new();
+
     for a in -11..12 {
         for b in -11..12 {
             let choose_mat = rng.get();
@@ -165,7 +172,7 @@ fn random_scene(rng: &mut RngGen) -> HittableList {
                 Rc::new(Dielectric::new(1.5))
             };
 
-            world.add(Rc::new(MovingSphere::new(
+            balls_list.add(Rc::new(MovingSphere::new(
                         center,
                         center2,
                         0.0,
@@ -177,15 +184,18 @@ fn random_scene(rng: &mut RngGen) -> HittableList {
 
     let mat1: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
     let sph1: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0,1.0,0.0), 1.0, mat1));
-    world.add(sph1);
+    balls_list.add(sph1);
 
     let mat2: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
     let sph2: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-4.0,1.0,0.0), 1.0, mat2));
-    world.add(sph2);
+    balls_list.add(sph2);
 
     let mat3: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
     let sph3: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(4.0,1.0,0.0), 1.0, mat3));
-    world.add(sph3);
+    balls_list.add(sph3);
+
+    let ball_bvh = Rc::new(BVH::new(&mut balls_list, 0.0, 1.0, rng));
+    world.add(ball_bvh);
 
     world
 }

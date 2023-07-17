@@ -40,6 +40,10 @@ impl AABB {
             maximum: Vec3::new(max_x, max_y, max_z)
         }
     }
+
+    pub fn copy(&self) -> Self {
+        Self::new(self.minimum.copy(), self.maximum.copy())
+    }
 }
 
 fn hit_axis(min_axis: Float, max_axis: Float,
