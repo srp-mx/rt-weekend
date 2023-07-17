@@ -26,7 +26,7 @@ impl Dielectric {
 impl Material for Dielectric {
     fn scatter(&self, r_in: &Ray, hit: &HitRecord, rng: &mut RngGen) -> Scatter {
         let new_color = Color::one();
-        let refraction_ratio = if hit.front_face {
+        let refraction_ratio = if hit.in_front_face() {
             self.ior.recip()
         } else {
             self.ior

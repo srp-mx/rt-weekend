@@ -16,6 +16,8 @@ pub mod moving_sphere;
 pub mod aabb;
 pub mod bvh;
 pub mod axis;
+pub mod texture;
+pub mod checker_texture;
 
 use std::rc::Rc;
 use float::*;
@@ -36,6 +38,8 @@ use material::Material;
 use pixel_buffer::PixelBuffer;
 use moving_sphere::MovingSphere;
 use bvh::BVH;
+use texture::SolidColor;
+use checker_texture::CheckerTexture;
 
 use minifb::{Window, WindowOptions};
 use std::sync::RwLock;
@@ -147,7 +151,8 @@ impl Ray {
 fn random_scene(rng: &mut RngGen) -> HittableList {
     let mut world = HittableList::new();
 
-    let ground_mat = Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+    let checker = Rc::new(CheckerTexture::new_solid(Color::new(0.2,0.3,0.1), Color::new(0.9,0.9,0.9)));
+    let ground_mat = Rc::new(Lambertian::new(checker));
     let ground: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0,-1000.0,0.0), 1000.0, ground_mat));
     world.add(ground);
 
@@ -165,7 +170,7 @@ fn random_scene(rng: &mut RngGen) -> HittableList {
 
             let sphere_mat: Rc<dyn Material> = if choose_mat < 0.8 {
                 center2 = &center + Vec3::new(0.0, rng.range(0.0, 0.5), 0.0);
-                Rc::new(Lambertian::new(Color::random(rng) * Color::random(rng)))
+                Rc::new(Lambertian::new(Rc::new(SolidColor::new(Color::random(rng) * Color::random(rng)))))
             } else if choose_mat < 0.95 {
                 Rc::new(Metal::new(Color::random_range(rng, 0.5, 1.0), rng.range(0.0, 0.5)))
             } else {
@@ -186,7 +191,7 @@ fn random_scene(rng: &mut RngGen) -> HittableList {
     let sph1: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0,1.0,0.0), 1.0, mat1));
     balls_list.add(sph1);
 
-    let mat2: Rc<dyn Material> = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+    let mat2: Rc<dyn Material> = Rc::new(Lambertian::new(Rc::new(SolidColor::new(Color::new(0.4, 0.2, 0.1)))));
     let sph2: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-4.0,1.0,0.0), 1.0, mat2));
     balls_list.add(sph2);
 

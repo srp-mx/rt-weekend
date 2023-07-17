@@ -28,6 +28,14 @@ impl Sphere {
     pub fn mat(&self) -> &dyn Material {
         self.mat.as_ref()
     }
+
+    fn get_uv(p: &Point3, out_u: &mut Float, out_v: &mut Float) {
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + std::f64::consts::PI;
+
+        *out_u = phi * std::f64::consts::FRAC_1_PI * 0.5;
+        *out_v = theta * std::f64::consts::FRAC_1_PI;
+    }
 }
 
 impl Hittable for Sphere {
@@ -52,12 +60,14 @@ impl Hittable for Sphere {
             }
         }
 
-        let mut rec = HitRecord::null();
-        rec.t = root;
-        rec.set_p(r.at(rec.t));
-        let outward_normal: Vec3 = (rec.p() - self.center()) / self.radius();
-        rec.set_face_normal(r, outward_normal);
-        rec.set_mat(self.mat.clone());
+        let rec_t = root;
+        let rec_p = r.at(rec_t);
+        let outward_normal: Vec3 = (&rec_p - self.center()) / self.radius();
+        let rec_mat = self.mat.clone();
+        let mut u: Float = 0.0;
+        let mut v: Float = 0.0;
+        Sphere::get_uv(&outward_normal, &mut u, &mut v);
+        let rec = HitRecord::new(&r, rec_p, outward_normal, rec_mat, rec_t, u, v);
         Some(rec)
     }
 

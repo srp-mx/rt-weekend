@@ -38,8 +38,8 @@ impl Hittable for HittableList {
 
         for object in self.objects.iter() {
             match object.hit(r, t_min, t_max) {
-                Some(object_hit) => if object_hit.t < closest_so_far {
-                        closest_so_far = object_hit.t;
+                Some(object_hit) => if object_hit.t() < closest_so_far {
+                        closest_so_far = object_hit.t();
                         hit = Some(object_hit);
                 },
                 None => continue

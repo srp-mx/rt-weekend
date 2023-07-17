@@ -10,18 +10,36 @@ pub struct HitRecord {
     p: Point3,
     normal: Vec3,
     mat: Rc<dyn Material>,
-    pub t: Float,
-    pub front_face: bool,
+    t: Float,
+    u: Float,
+    v: Float,
+    in_front_face: bool,
 }
 
 impl HitRecord {
+    pub fn new(
+            r: &Ray,
+            p: Point3,
+            outward_normal: Vec3,
+            mat: Rc<dyn Material>,
+            t: Float,
+            u: Float,
+            v: Float) -> Self {
+        let mut normal: Vec3 = Vec3::zero();
+        let mut in_front_face: bool = false;
+        Self::front_face_and_normal(&r, outward_normal, &mut normal, &mut in_front_face);
+        Self { p, normal, mat, t, u, v, in_front_face }
+    }
+
     pub fn null() -> Self {
         Self {
             p: Point3::zero(),
             normal: Vec3::zero(),
             mat: Rc::new(NullMaterial),
             t: -1.0,
-            front_face: false,
+            u: -1.0,
+            v: -1.0,
+            in_front_face: false,
         }
     }
 
@@ -45,9 +63,27 @@ impl HitRecord {
         self.t
     }
 
+    pub fn in_front_face(&self) -> bool {
+        self.in_front_face
+    }
+
+    pub fn u(&self) -> Float {
+        self.u
+    }
+
+    pub fn v(&self) -> Float {
+        self.v
+    }
+
     pub fn set_face_normal(&mut self, r: &Ray, outward_normal: Vec3) {
-        self.front_face = Vec3::dot(r.direction(), &outward_normal) < 0.0;
-        self.normal = if self.front_face {
+        Self::front_face_and_normal(r, outward_normal, &mut self.normal, &mut self.in_front_face);
+    }
+
+    fn front_face_and_normal(r: &Ray, outward_normal: Vec3,
+                             out_normal: &mut Vec3,
+                             out_in_front_face: &mut bool) {
+        *out_in_front_face = Vec3::dot(r.direction(), &outward_normal) < 0.0;
+        *out_normal = if *out_in_front_face {
             outward_normal
         } else {
             -outward_normal
@@ -57,7 +93,6 @@ impl HitRecord {
     pub fn set_mat(&mut self, mat: Rc<dyn Material>) {
         self.mat = mat;
     }
-
 }
 
 pub trait Hittable {
