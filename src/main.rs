@@ -18,28 +18,17 @@ pub mod bvh;
 pub mod axis;
 pub mod texture;
 pub mod checker_texture;
+pub mod default_scenes;
 
-use std::rc::Rc;
 use float::*;
 use vec3::Vec3;
 use color::Color;
-type Point3 = Vec3;
 use ray::Ray;
 use hittable::*;
-use sphere::Sphere;
-use hittable_list::HittableList;
 use rng_float::RngGen;
-use camera::{Camera, CameraBuilder};
 use material::Scatter;
-use metal::Metal;
-use lambertian::Lambertian;
-use dielectric::Dielectric;
-use material::Material;
 use pixel_buffer::PixelBuffer;
-use moving_sphere::MovingSphere;
-use bvh::BVH;
-use texture::SolidColor;
-use checker_texture::CheckerTexture;
+use default_scenes::{DefaultScene, select_default_scene, select_default_scene_cam};
 
 use minifb::{Window, WindowOptions};
 use std::sync::RwLock;
@@ -60,19 +49,10 @@ fn main() {
     // Pixel Buffer
     let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT)));
 
-    // World
-    let world = random_scene(&mut rng);
-
-    // Camera
-    let cam: Camera = CameraBuilder::new()
-        .lookfrom(Vec3::new(12.0, 2.0, 3.0))
-        .vertical_fov(20.0)
-        .focus_dist(10.0)
-        .aperture(0.1)
-        .aspect_ratio(ASPECT_RATIO)
-        .shutter_open_time(0.0)
-        .shutter_close_time(1.0)
-        .build();
+    // Scene, World and Camera
+    let ref scene = DefaultScene::TwoSpheres;
+    let world = select_default_scene(scene, &mut rng);
+    let cam = select_default_scene_cam(scene, ASPECT_RATIO);
 
     // Fast Render Pass for Preview
     eprintln!("Making a fast render pass for preview");
@@ -148,63 +128,6 @@ impl Ray {
     }
 }
 
-fn random_scene(rng: &mut RngGen) -> HittableList {
-    let mut world = HittableList::new();
-
-    let checker = Rc::new(CheckerTexture::new_solid(Color::new(0.2,0.3,0.1), Color::new(0.9,0.9,0.9)));
-    let ground_mat = Rc::new(Lambertian::new(checker));
-    let ground: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0,-1000.0,0.0), 1000.0, ground_mat));
-    world.add(ground);
-
-    let mut balls_list = HittableList::new();
-
-    for a in -11..12 {
-        for b in -11..12 {
-            let choose_mat = rng.get();
-            let center = Point3::new(a as Float + 0.9*rng.get(), 0.2, b as Float + 0.9*rng.get());
-            let mut center2 = center.copy();
-            
-            if (&center - &Point3::new(4.0, 0.2, 0.0)).length() <= 0.9 {
-                continue;
-            }
-
-            let sphere_mat: Rc<dyn Material> = if choose_mat < 0.8 {
-                center2 = &center + Vec3::new(0.0, rng.range(0.0, 0.5), 0.0);
-                Rc::new(Lambertian::new(Rc::new(SolidColor::new(Color::random(rng) * Color::random(rng)))))
-            } else if choose_mat < 0.95 {
-                Rc::new(Metal::new(Color::random_range(rng, 0.5, 1.0), rng.range(0.0, 0.5)))
-            } else {
-                Rc::new(Dielectric::new(1.5))
-            };
-
-            balls_list.add(Rc::new(MovingSphere::new(
-                        center,
-                        center2,
-                        0.0,
-                        1.0,
-                        0.2,
-                        sphere_mat)));
-        }
-    }
-
-    let mat1: Rc<dyn Material> = Rc::new(Dielectric::new(1.5));
-    let sph1: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(0.0,1.0,0.0), 1.0, mat1));
-    balls_list.add(sph1);
-
-    let mat2: Rc<dyn Material> = Rc::new(Lambertian::new(Rc::new(SolidColor::new(Color::new(0.4, 0.2, 0.1)))));
-    let sph2: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(-4.0,1.0,0.0), 1.0, mat2));
-    balls_list.add(sph2);
-
-    let mat3: Rc<dyn Material> = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
-    let sph3: Rc<dyn Hittable> = Rc::new(Sphere::new(Point3::new(4.0,1.0,0.0), 1.0, mat3));
-    balls_list.add(sph3);
-
-    let ball_bvh = Rc::new(BVH::new(&mut balls_list, 0.0, 1.0, rng));
-    world.add(ball_bvh);
-
-    world
-}
-
 fn make_preview_window(buffer_lock: Arc<RwLock<PixelBuffer>>) -> JoinHandle<()> {
     std::thread::spawn(move || {
         let buffer = loop {
@@ -232,5 +155,7 @@ fn make_preview_window(buffer_lock: Arc<RwLock<PixelBuffer>>) -> JoinHandle<()> 
             std::mem::drop(buffer);
             std::thread::sleep(std::time::Duration::from_millis(500));
         }
+
+        eprint!("\n\nPreview window closed. The render will continue.\nStop render with <C-c> on the terminal.\n\n");
     })
 }
