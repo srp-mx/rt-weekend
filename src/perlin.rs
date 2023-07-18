@@ -66,6 +66,20 @@ impl Perlin {
         let c = unsafe { std::mem::transmute::<_, [Vec3; 8]>(c) };
         perlin_interp(&c, u, v, w)
     }
+
+    pub fn turb(&self, p: &Point3, depth: u32) -> Float {
+        let mut accum = 0.0;
+        let mut temp_p = p.copy();
+        let mut weight = 1.0;
+
+        for _i in 0..depth {
+            accum += weight*self.noise(&temp_p);
+            weight *= 0.5;
+            temp_p = 2.0 * temp_p;
+        }
+
+        return accum.abs()
+    }
 }
 
 fn populate(p: &mut [usize; POINT_COUNT]) {
