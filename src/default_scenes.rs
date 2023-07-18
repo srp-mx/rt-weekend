@@ -16,13 +16,16 @@ use super::moving_sphere::MovingSphere;
 use super::bvh::BVH;
 use super::camera::{Camera, CameraBuilder};
 use super::noise_texture::NoiseTexture;
+use super::image_texture::ImageTexture;
 
+use std::path::Path;
 use std::rc::Rc;
 
 pub enum DefaultScene {
     RandomScene,
     TwoSpheres,
     PerlinSpheres,
+    Earth,
 }
 
 pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableList {
@@ -30,6 +33,7 @@ pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableL
         DefaultScene::RandomScene => random_scene(rng),
         DefaultScene::TwoSpheres => two_spheres(),
         DefaultScene::PerlinSpheres => perlin_spheres(rng),
+        DefaultScene::Earth => earth(),
     }
 }
 
@@ -38,6 +42,7 @@ pub fn select_default_scene_cam(scene: &DefaultScene, aspect_ratio: Float) -> Ca
         DefaultScene::RandomScene => random_scene_cam(aspect_ratio),
         DefaultScene::TwoSpheres => two_spheres_cam(aspect_ratio),
         DefaultScene::PerlinSpheres => perlin_spheres_cam(aspect_ratio),
+        DefaultScene::Earth => earth_cam(aspect_ratio),
     }
 }
 
@@ -174,6 +179,36 @@ fn perlin_spheres(rng: &mut RngGen) -> HittableList {
 }
 
 fn perlin_spheres_cam(aspect_ratio: Float) -> Camera {
+    CameraBuilder::new()
+            .lookfrom(Vec3::new(13.0, 2.0, 3.0))
+            .lookat(Vec3::zero())
+            .vertical_fov(20.0)
+            .focus_dist(10.0)
+            .aperture(0.0)
+            .aspect_ratio(aspect_ratio)
+            .shutter_open_time(0.0)
+            .shutter_close_time(1.0)
+            .build()
+}
+
+/* Previous settings:
+ * IMAGE
+    const ASPECT_RATIO:Float = 16.0 / 9.0;
+    const IMAGE_WIDTH:usize = 300;
+    const IMAGE_HEIGHT:usize = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as usize;
+    const SAMPLES_PER_PIXEL:i32 = 50;
+    const MAX_DEPTH: i32 = 12;
+ * */
+fn earth() -> HittableList {
+    let earth_tex = Rc::new(ImageTexture::new(Path::new("earthmap.jpg")));
+    let earth_surf = Rc::new(Lambertian::new(earth_tex.clone()));
+    let globe = Rc::new(Sphere::new(Point3::zero(), 2.0, earth_surf.clone()));
+    let mut earth = HittableList::new();
+    earth.add(globe);
+    earth
+}
+
+fn earth_cam(aspect_ratio: Float) -> Camera {
     CameraBuilder::new()
             .lookfrom(Vec3::new(13.0, 2.0, 3.0))
             .lookat(Vec3::zero())
