@@ -47,7 +47,7 @@ fn main() {
     let mut rng = RngGen::new();
 
     // Image
-    const ASPECT_RATIO:Float = 16.0 / 9.0;
+    const ASPECT_RATIO:Float = 1.0;
     const IMAGE_WIDTH:usize = 300;
     const SAMPLES_PER_PIXEL:i32 = 400;
     const MAX_DEPTH: i32 = 12;
@@ -56,7 +56,7 @@ fn main() {
     let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, ASPECT_RATIO)));
 
     // Scene, World, Sky and Camera Settings
-    let ref scene = DefaultScene::SimpleLight;
+    let ref scene = DefaultScene::CornellBox;
     let world = Rc::new(select_default_scene(scene, &mut rng));
     let sky = select_default_scene_sky(scene);
     let mut cam_settings = select_default_scene_cam_settings(scene);

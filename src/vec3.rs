@@ -16,6 +16,18 @@ impl Vec3 {
         Self::new(1.0, 1.0, 1.0)
     }
 
+    pub fn right() -> Self {
+        Self::new(1.0, 0.0, 0.0)
+    }
+
+    pub fn up() -> Self {
+        Self::new(0.0, 1.0, 0.0)
+    }
+
+    pub fn fwd() -> Self {
+        Self::new(0.0, 0.0, 1.0)
+    }
+
     pub fn random(rng: &mut RngGen) -> Self {
         Self::new(rng.get(), rng.get(), rng.get())
     }
