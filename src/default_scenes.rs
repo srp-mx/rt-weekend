@@ -18,6 +18,8 @@ use super::camera::CameraBuilder;
 use super::noise_texture::NoiseTexture;
 use super::image_texture::ImageTexture;
 use super::renderer::Sky;
+use super::diffuse_light::DiffuseLight;
+use super::aarect::XyRect;
 
 use std::path::Path;
 use std::rc::Rc;
@@ -27,6 +29,7 @@ pub enum DefaultScene {
     TwoSpheres,
     PerlinSpheres,
     Earth,
+    SimpleLight,
 }
 
 pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableList {
@@ -35,6 +38,7 @@ pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableL
         DefaultScene::TwoSpheres => two_spheres(),
         DefaultScene::PerlinSpheres => perlin_spheres(rng),
         DefaultScene::Earth => earth(),
+        DefaultScene::SimpleLight => simple_light(rng),
     }
 }
 
@@ -44,6 +48,7 @@ pub fn select_default_scene_cam_settings(scene: &DefaultScene) -> CameraBuilder 
         DefaultScene::TwoSpheres => two_spheres_cam(),
         DefaultScene::PerlinSpheres => perlin_spheres_cam(),
         DefaultScene::Earth => earth_cam(),
+        DefaultScene::SimpleLight => simple_light_cam(),
     }
 }
 
@@ -53,7 +58,9 @@ pub fn select_default_scene_sky(scene: &DefaultScene) -> Sky {
         | DefaultScene::TwoSpheres
         | DefaultScene::Earth
         | DefaultScene::PerlinSpheres =>
-            Sky::Gradient(Color::one(), Color::new(0.5, 0.7, 1.0))
+            Sky::Gradient(Color::one(), Color::new(0.5, 0.7, 1.0)),
+
+        DefaultScene::SimpleLight => Sky::SolidColor(Color::zero()),
     }
 }
 
@@ -229,5 +236,28 @@ fn earth_cam() -> CameraBuilder {
         .aspect_ratio(16.0 / 9.0)
         .shutter_open_time(0.0)
         .shutter_close_time(1.0);
+    cam
+}
+
+/* Previous settings:
+ * IMAGE
+    const ASPECT_RATIO:Float = 16.0 / 9.0;
+    const IMAGE_WIDTH:usize = 300;
+    const IMAGE_HEIGHT:usize = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as usize;
+    const SAMPLES_PER_PIXEL:i32 = 400;
+    const MAX_DEPTH: i32 = 12;
+ * */
+fn simple_light(rng: &mut RngGen) -> HittableList {
+    let mut objects = perlin_spheres(rng);
+    let difflight = Rc::new(DiffuseLight::new_from_color(&(Color::one()*4.0)));
+    objects.add(Rc::new(XyRect::new(3.0,5.0,1.0,3.0,-2.0,difflight)));
+    objects
+}
+
+fn simple_light_cam() -> CameraBuilder {
+    let mut cam = perlin_spheres_cam();
+    cam.lookfrom(Point3::new(26.0,3.0,6.0))
+        .lookat(Point3::new(0.0,2.0,0.0))
+        .vertical_fov(20.0);
     cam
 }

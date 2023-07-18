@@ -69,13 +69,13 @@ impl Hittable for MovingSphere {
         }
 
         let rec_t = root;
-        let rec_p = r.at(rec_t);
-        let outward_normal: Vec3 = (&rec_p - self.center(r.time())) / self.radius();
+        let hit_p = r.at(rec_t);
+        let outward_normal: Vec3 = (&hit_p - self.center(r.time())) / self.radius();
         let rec_mat = self.mat.clone();
         let mut u: Float = 0.0;
         let mut v: Float = 0.0;
         MovingSphere::get_uv(&outward_normal, &mut u, &mut v);
-        let rec = HitRecord::new(&r, rec_p, outward_normal, rec_mat, rec_t, u, v);
+        let rec = HitRecord::new(&r, outward_normal, rec_mat, rec_t, u, v);
         Some(rec)
     }
 

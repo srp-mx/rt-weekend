@@ -86,10 +86,11 @@ fn ray_color(this: &Ray, info: &RenderInfo, bounces_left: i32, rng: &mut RngGen)
     if bounces_left <= 0 { return Color::zero() }
 
     if let Some(hit) = info.world.hit(this, 0.001, Float::INFINITY) {
+        let emmited = hit.mat().emmited(hit.u(), hit.v(), hit.p());
         return if let Scatter::Some(scatter_ray, scatter_color) = hit.mat().scatter(this, &hit, rng) {
-            scatter_color * ray_color(&scatter_ray, info, bounces_left-1, rng)
+            emmited + scatter_color*ray_color(&scatter_ray, info, bounces_left-1, rng)
         } else {
-            Color::zero()
+            emmited
         }
     }
 

@@ -19,7 +19,6 @@ pub struct HitRecord {
 impl HitRecord {
     pub fn new(
             r: &Ray,
-            p: Point3,
             outward_normal: Vec3,
             mat: Rc<dyn Material>,
             t: Float,
@@ -28,7 +27,7 @@ impl HitRecord {
         let mut normal: Vec3 = Vec3::zero();
         let mut in_front_face: bool = false;
         Self::front_face_and_normal(&r, outward_normal, &mut normal, &mut in_front_face);
-        Self { p, normal, mat, t, u, v, in_front_face }
+        Self { p: r.at(t), normal, mat, t, u, v, in_front_face }
     }
 
     pub fn null() -> Self {
