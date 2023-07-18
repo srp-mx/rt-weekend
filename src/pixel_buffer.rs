@@ -1,14 +1,17 @@
+use super::float::Float;
 use super::color::Color;
 
 pub struct PixelBuffer {
     buff: Vec<u32>, // xrgb
     width: usize,
     height: usize,
+    aspect_ratio: Float
 }
 
 impl PixelBuffer {
-    pub fn new(width: usize, height: usize) -> Self {
-        Self { width, height, buff: vec![0; width * height] }
+    pub fn new(width: usize, aspect_ratio: Float) -> Self {
+        let height = ((width as Float) / aspect_ratio) as usize;
+        Self { width, height, aspect_ratio, buff: vec![0; width * height] }
     }
 
     pub fn to_ppm(&self) -> String {
@@ -49,5 +52,9 @@ impl PixelBuffer {
 
     pub fn height(&self) -> usize {
         self.height
+    }
+
+    pub fn aspect_ratio(&self) -> Float {
+        self.aspect_ratio
     }
 }

@@ -14,9 +14,10 @@ use super::dielectric::Dielectric;
 use super::sphere::Sphere;
 use super::moving_sphere::MovingSphere;
 use super::bvh::BVH;
-use super::camera::{Camera, CameraBuilder};
+use super::camera::CameraBuilder;
 use super::noise_texture::NoiseTexture;
 use super::image_texture::ImageTexture;
+use super::renderer::Sky;
 
 use std::path::Path;
 use std::rc::Rc;
@@ -37,12 +38,22 @@ pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableL
     }
 }
 
-pub fn select_default_scene_cam(scene: &DefaultScene, aspect_ratio: Float) -> Camera {
+pub fn select_default_scene_cam_settings(scene: &DefaultScene) -> CameraBuilder {
     match scene {
-        DefaultScene::RandomScene => random_scene_cam(aspect_ratio),
-        DefaultScene::TwoSpheres => two_spheres_cam(aspect_ratio),
-        DefaultScene::PerlinSpheres => perlin_spheres_cam(aspect_ratio),
-        DefaultScene::Earth => earth_cam(aspect_ratio),
+        DefaultScene::RandomScene => random_scene_cam(),
+        DefaultScene::TwoSpheres => two_spheres_cam(),
+        DefaultScene::PerlinSpheres => perlin_spheres_cam(),
+        DefaultScene::Earth => earth_cam(),
+    }
+}
+
+pub fn select_default_scene_sky(scene: &DefaultScene) -> Sky {
+    match scene {
+        DefaultScene::RandomScene
+        | DefaultScene::TwoSpheres
+        | DefaultScene::Earth
+        | DefaultScene::PerlinSpheres =>
+            Sky::Gradient(Color::one(), Color::new(0.5, 0.7, 1.0))
     }
 }
 
@@ -111,17 +122,17 @@ fn random_scene(rng: &mut RngGen) -> HittableList {
     world
 }
 
-fn random_scene_cam(aspect_ratio: Float) -> Camera {
-    CameraBuilder::new()
-            .lookfrom(Vec3::new(12.0, 2.0, 3.0))
-            .lookat(Vec3::zero())
-            .vertical_fov(20.0)
-            .focus_dist(10.0)
-            .aperture(0.1)
-            .aspect_ratio(aspect_ratio)
-            .shutter_open_time(0.0)
-            .shutter_close_time(1.0)
-            .build()
+fn random_scene_cam() -> CameraBuilder {
+    let mut cam = CameraBuilder::new();
+    cam.lookfrom(Vec3::new(12.0, 2.0, 3.0))
+        .lookat(Vec3::zero())
+        .vertical_fov(20.0)
+        .focus_dist(10.0)
+        .aperture(0.1)
+        .aspect_ratio(16.0 / 9.0)
+        .shutter_open_time(0.0)
+        .shutter_close_time(1.0);
+    cam
 }
 
 
@@ -147,17 +158,17 @@ fn two_spheres() -> HittableList {
     objects
 }
 
-fn two_spheres_cam(aspect_ratio: Float) -> Camera {
-    CameraBuilder::new()
-            .lookfrom(Vec3::new(13.0, 2.0, 3.0))
-            .lookat(Vec3::zero())
-            .vertical_fov(20.0)
-            .focus_dist(10.0)
-            .aperture(0.0)
-            .aspect_ratio(aspect_ratio)
-            .shutter_open_time(0.0)
-            .shutter_close_time(1.0)
-            .build()
+fn two_spheres_cam() -> CameraBuilder {
+    let mut cam = CameraBuilder::new();
+    cam.lookfrom(Vec3::new(13.0, 2.0, 3.0))
+        .lookat(Vec3::zero())
+        .vertical_fov(20.0)
+        .focus_dist(10.0)
+        .aperture(0.0)
+        .aspect_ratio(16.0 / 9.0)
+        .shutter_open_time(0.0)
+        .shutter_close_time(1.0);
+    cam
 }
 
 /* Previous settings:
@@ -178,17 +189,17 @@ fn perlin_spheres(rng: &mut RngGen) -> HittableList {
     objects
 }
 
-fn perlin_spheres_cam(aspect_ratio: Float) -> Camera {
-    CameraBuilder::new()
-            .lookfrom(Vec3::new(13.0, 2.0, 3.0))
-            .lookat(Vec3::zero())
-            .vertical_fov(20.0)
-            .focus_dist(10.0)
-            .aperture(0.0)
-            .aspect_ratio(aspect_ratio)
-            .shutter_open_time(0.0)
-            .shutter_close_time(1.0)
-            .build()
+fn perlin_spheres_cam() -> CameraBuilder {
+    let mut cam  = CameraBuilder::new();
+    cam.lookfrom(Vec3::new(13.0, 2.0, 3.0))
+        .lookat(Vec3::zero())
+        .vertical_fov(20.0)
+        .focus_dist(10.0)
+        .aperture(0.0)
+        .aspect_ratio(16.0 / 9.0)
+        .shutter_open_time(0.0)
+        .shutter_close_time(1.0);
+    cam
 }
 
 /* Previous settings:
@@ -208,15 +219,15 @@ fn earth() -> HittableList {
     earth
 }
 
-fn earth_cam(aspect_ratio: Float) -> Camera {
-    CameraBuilder::new()
-            .lookfrom(Vec3::new(13.0, 2.0, 3.0))
-            .lookat(Vec3::zero())
-            .vertical_fov(20.0)
-            .focus_dist(10.0)
-            .aperture(0.0)
-            .aspect_ratio(aspect_ratio)
-            .shutter_open_time(0.0)
-            .shutter_close_time(1.0)
-            .build()
+fn earth_cam() -> CameraBuilder {
+    let mut cam = CameraBuilder::new();
+    cam.lookfrom(Vec3::new(13.0, 2.0, 3.0))
+        .lookat(Vec3::zero())
+        .vertical_fov(20.0)
+        .focus_dist(10.0)
+        .aperture(0.0)
+        .aspect_ratio(16.0 / 9.0)
+        .shutter_open_time(0.0)
+        .shutter_close_time(1.0);
+    cam
 }

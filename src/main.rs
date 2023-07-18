@@ -22,21 +22,23 @@ pub mod default_scenes;
 pub mod perlin;
 pub mod noise_texture;
 pub mod image_texture;
+pub mod renderer;
 
 use float::*;
 use vec3::Vec3;
-use color::Color;
-use ray::Ray;
-use hittable::*;
 use rng_float::RngGen;
-use material::Scatter;
 use pixel_buffer::PixelBuffer;
-use default_scenes::{DefaultScene, select_default_scene, select_default_scene_cam};
+use default_scenes::{
+    DefaultScene, select_default_scene, select_default_scene_cam_settings,
+    select_default_scene_sky
+};
+use renderer::RenderInfo;
 
 use minifb::{Window, WindowOptions};
 use std::sync::RwLock;
 use std::sync::Arc;
 use std::thread::JoinHandle;
+use std::rc::Rc;
 
 fn main() {
     // RNG
@@ -45,33 +47,26 @@ fn main() {
     // Image
     const ASPECT_RATIO:Float = 16.0 / 9.0;
     const IMAGE_WIDTH:usize = 300;
-    const IMAGE_HEIGHT:usize = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as usize;
     const SAMPLES_PER_PIXEL:i32 = 50;
     const MAX_DEPTH: i32 = 12;
 
     // Pixel Buffer
-    let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT)));
+    let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, ASPECT_RATIO)));
 
-    // Scene, World and Camera
-    let ref scene = DefaultScene::Earth;
-    let world = select_default_scene(scene, &mut rng);
-    let cam = select_default_scene_cam(scene, ASPECT_RATIO);
+    // Scene, World, Sky and Camera Settings
+    let ref scene = DefaultScene::RandomScene;
+    let world = Rc::new(select_default_scene(scene, &mut rng));
+    let sky = select_default_scene_sky(scene);
+    let mut cam_settings = select_default_scene_cam_settings(scene);
+
+    // Render Info
+    let mut rend = RenderInfo::new(buffer_lock.clone(), &mut cam_settings);
+    rend.sky(sky);
+    rend.world(world);
 
     // Fast Render Pass for Preview
     eprintln!("Making a fast render pass for preview");
-    let mut frpp_buffer = buffer_lock.write().unwrap();
-    for j in (0..IMAGE_HEIGHT).rev() {
-        eprintln!("Scanlines remaining on preview: {}", j+1);
-        for i in 0..IMAGE_WIDTH {
-            let mut pixel_color = Color::zero();
-            let u = ((i as Float) + rng.get()) / ((IMAGE_WIDTH-1) as Float);
-            let v = ((j as Float) + rng.get()) / ((IMAGE_HEIGHT-1) as Float);
-            let r: Ray = cam.get_ray(u, v, &mut rng);
-            pixel_color += r.color(&world, 2, &mut rng);
-            frpp_buffer.set_pixel(i, IMAGE_HEIGHT-j-1, &pixel_color, 1);
-        }
-    }
-    std::mem::drop(frpp_buffer);
+    rend.render(1, 1, &mut rng);
 
     // Preview Window
     let preview_thread = make_preview_window(buffer_lock.clone());
@@ -79,26 +74,7 @@ fn main() {
     // Render
     let timer_start = std::time::Instant::now();
     eprintln!("\nGetting serious now >:)\n");
-    for j in (0..IMAGE_HEIGHT).rev() {
-        eprint!("\nScanlines remaining: {}\n", j+1);
-        for i in 0..IMAGE_WIDTH {
-            let mut pixel_color = Color::zero();
-            for _ in 0..SAMPLES_PER_PIXEL {
-                let u = ((i as Float) + rng.get()) / ((IMAGE_WIDTH-1) as Float);
-                let v = ((j as Float) + rng.get()) / ((IMAGE_HEIGHT-1) as Float);
-                let r: Ray = cam.get_ray(u, v, &mut rng);
-                pixel_color += r.color(&world, MAX_DEPTH, &mut rng);
-            }
-
-            let mut buffer = loop {
-                if let Ok(buffer) = buffer_lock.write() {
-                    break buffer
-                }
-            };
-            buffer.set_pixel(i, IMAGE_HEIGHT-j-1, &pixel_color, SAMPLES_PER_PIXEL);
-            std::mem::drop(buffer);
-        }
-    }
+    rend.render(SAMPLES_PER_PIXEL, MAX_DEPTH, &mut rng);
     let timer_duration = timer_start.elapsed(); 
 
     eprint!("\nWriting output.\n");
@@ -107,28 +83,6 @@ fn main() {
     eprint!("\nDone.\nRendering took {:?}\n", timer_duration);
 
     preview_thread.join().unwrap();
-}
-
-impl Ray {
-    pub fn color(&self, world:&dyn Hittable, depth: i32, rng:&mut RngGen) -> Color {
-        if depth <= 0 {
-            return Color::zero();
-        }
-
-        if let Some(hit) = world.hit(self, 0.001, Float::INFINITY) {
-            return if let Scatter::Some(scatter_ray, scatter_color) = hit.mat().scatter(&self, &hit, rng) {
-                scatter_color * Ray::color(&scatter_ray, world, depth-1, rng)
-            } else {
-                Color::zero()
-            }
-        }
-
-        let unit_direction: Vec3 = self.direction().unit_vector();
-        let t = 0.5 * (unit_direction.y() + 1.0);
-        let c1 = Color::one();
-        let c2 = Color::new(0.5, 0.7, 1.0);
-        Vec3::lerp(&c1, &c2, t)
-    }
 }
 
 fn make_preview_window(buffer_lock: Arc<RwLock<PixelBuffer>>) -> JoinHandle<()> {
@@ -159,6 +113,7 @@ fn make_preview_window(buffer_lock: Arc<RwLock<PixelBuffer>>) -> JoinHandle<()> 
             std::thread::sleep(std::time::Duration::from_millis(500));
         }
 
-        eprint!("\n\nPreview window closed. The render will continue.\nStop render with <C-c> on the terminal.\n\n");
+        eprintln!("\n\nPreview window closed. The render will continue to completion.");
+        eprintln!("Stop render with <C-c> on the terminal.\n");
     })
 }
