@@ -23,4 +23,8 @@ impl RngGen {
     pub fn range(&mut self, min: Float, max: Float) -> Float {
         min + (max-min)*self.get()
     }
+
+    pub fn usize(&mut self, min: i32, max: usize) -> usize {
+        self.range(min as Float, max as Float + 1.0) as usize
+    }
 }

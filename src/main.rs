@@ -19,6 +19,8 @@ pub mod axis;
 pub mod texture;
 pub mod checker_texture;
 pub mod default_scenes;
+pub mod perlin;
+pub mod noise_texture;
 
 use float::*;
 use vec3::Vec3;
@@ -50,7 +52,7 @@ fn main() {
     let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT)));
 
     // Scene, World and Camera
-    let ref scene = DefaultScene::TwoSpheres;
+    let ref scene = DefaultScene::PerlinSpheres;
     let world = select_default_scene(scene, &mut rng);
     let cam = select_default_scene_cam(scene, ASPECT_RATIO);
 

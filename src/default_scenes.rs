@@ -15,25 +15,29 @@ use super::sphere::Sphere;
 use super::moving_sphere::MovingSphere;
 use super::bvh::BVH;
 use super::camera::{Camera, CameraBuilder};
+use super::noise_texture::NoiseTexture;
 
 use std::rc::Rc;
 
 pub enum DefaultScene {
     RandomScene,
-    TwoSpheres
+    TwoSpheres,
+    PerlinSpheres,
 }
 
 pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableList {
     match scene {
         DefaultScene::RandomScene => random_scene(rng),
-        DefaultScene::TwoSpheres => two_spheres()
+        DefaultScene::TwoSpheres => two_spheres(),
+        DefaultScene::PerlinSpheres => perlin_spheres(rng),
     }
 }
 
 pub fn select_default_scene_cam(scene: &DefaultScene, aspect_ratio: Float) -> Camera {
     match scene {
         DefaultScene::RandomScene => random_scene_cam(aspect_ratio),
-        DefaultScene::TwoSpheres => two_spheres_cam(aspect_ratio)
+        DefaultScene::TwoSpheres => two_spheres_cam(aspect_ratio),
+        DefaultScene::PerlinSpheres => perlin_spheres_cam(aspect_ratio),
     }
 }
 
@@ -139,6 +143,37 @@ fn two_spheres() -> HittableList {
 }
 
 fn two_spheres_cam(aspect_ratio: Float) -> Camera {
+    CameraBuilder::new()
+            .lookfrom(Vec3::new(13.0, 2.0, 3.0))
+            .lookat(Vec3::zero())
+            .vertical_fov(20.0)
+            .focus_dist(10.0)
+            .aperture(0.0)
+            .aspect_ratio(aspect_ratio)
+            .shutter_open_time(0.0)
+            .shutter_close_time(1.0)
+            .build()
+}
+
+/* Previous settings:
+ * IMAGE
+    const ASPECT_RATIO:Float = 16.0 / 9.0;
+    const IMAGE_WIDTH:usize = 300;
+    const IMAGE_HEIGHT:usize = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as usize;
+    const SAMPLES_PER_PIXEL:i32 = 50;
+    const MAX_DEPTH: i32 = 12;
+ * */
+fn perlin_spheres(rng: &mut RngGen) -> HittableList {
+    let mut objects = HittableList::new();   
+    let pertext = Rc::new(Lambertian::new(Rc::new(NoiseTexture::new(4.0, rng))));
+    let s1 = Rc::new(Sphere::new(Point3::new(0.0,-1000.0,0.0), 1000.0, pertext.clone()));
+    let s2 = Rc::new(Sphere::new(Point3::new(0.0, 2.0,0.0), 2.0, pertext.clone()));
+    objects.add(s1);
+    objects.add(s2);
+    objects
+}
+
+fn perlin_spheres_cam(aspect_ratio: Float) -> Camera {
     CameraBuilder::new()
             .lookfrom(Vec3::new(13.0, 2.0, 3.0))
             .lookat(Vec3::zero())
