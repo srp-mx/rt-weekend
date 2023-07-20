@@ -20,6 +20,9 @@ use super::image_texture::ImageTexture;
 use super::renderer::Sky;
 use super::diffuse_light::DiffuseLight;
 use super::aarect::{XyRect, YzRect, ZxRect};
+use super::rect_prism::RectPrism;
+use super::translate::Translate;
+use super::rotate_y::RotateY;
 
 use std::path::Path;
 use std::rc::Rc;
@@ -288,6 +291,16 @@ fn cornell_box() -> HittableList {
     objects.add(Rc::new(ZxRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white.clone())));
     objects.add(Rc::new(ZxRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
     objects.add(Rc::new(XyRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+
+    let box1 = Rc::new(RectPrism::new(&Point3::new(0.0,0.0,0.0), &Point3::new(165.0,330.0,165.0), white.clone()));
+    let box1 = Rc::new(RotateY::new(box1, 15.0));
+    let box1 = Rc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    objects.add(box1);
+    let box2 = Rc::new(RectPrism::new(&Point3::new(0.0,0.0,0.0), &Point3::new(165.0,165.0,165.0), white.clone()));
+    let box2 = Rc::new(RotateY::new(box2, -18.0));
+    let box2 = Rc::new(Translate::new(box2, Vec3::new(130.0,0.0,65.0)));
+    objects.add(box2);
+
     objects
 }
 

@@ -25,6 +25,9 @@ pub mod image_texture;
 pub mod renderer;
 pub mod diffuse_light;
 pub mod aarect;
+pub mod rect_prism;
+pub mod translate;
+pub mod rotate_y;
 
 use float::*;
 use vec3::Vec3;
@@ -50,7 +53,7 @@ fn main() {
     const ASPECT_RATIO:Float = 1.0;
     const IMAGE_WIDTH:usize = 300;
     const SAMPLES_PER_PIXEL:i32 = 400;
-    const MAX_DEPTH: i32 = 12;
+    const MAX_DEPTH: i32 = 50;
 
     // Pixel Buffer
     let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, ASPECT_RATIO)));
