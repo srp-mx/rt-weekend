@@ -1,4 +1,4 @@
-use super::float::Float;
+use super::float::{Float, PI, FRAC_1_PI};
 use super::rng_float::RngGen;
 use super::vec3::Vec3;
 type Point3 = Vec3;
@@ -40,10 +40,10 @@ impl MovingSphere {
 
     fn get_uv(p: &Point3, out_u: &mut Float, out_v: &mut Float) {
         let theta = (-p.y()).acos();
-        let phi = (-p.z()).atan2(p.x()) + std::f64::consts::PI;
+        let phi = (-p.z()).atan2(p.x()) + PI;
 
-        *out_u = phi * std::f64::consts::FRAC_1_PI * 0.5;
-        *out_v = theta * std::f64::consts::FRAC_1_PI;
+        *out_u = phi * FRAC_1_PI * 0.5;
+        *out_v = theta * FRAC_1_PI;
     }
 }
 
