@@ -1,5 +1,6 @@
 use std::rc::Rc;
-use super::float::*;
+use super::float::Float;
+use super::rng_float::RngGen;
 use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::hittable::*;
@@ -39,7 +40,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r:&crate::ray::Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&crate::ray::Ray, t_min:Float, t_max:Float, _rng: &mut RngGen) -> Option<HitRecord> {
         let ref oc: Vec3 = r.origin() - self.center();
         let a = r.direction().length_squared();
         let half_b = Vec3::dot(oc, r.direction());

@@ -28,6 +28,8 @@ pub mod aarect;
 pub mod rect_prism;
 pub mod translate;
 pub mod rotate_y;
+pub mod convex_constant_medium;
+pub mod isotropic;
 
 use float::*;
 use vec3::Vec3;
@@ -52,14 +54,14 @@ fn main() {
     // Image
     const ASPECT_RATIO:Float = 1.0;
     const IMAGE_WIDTH:usize = 300;
-    const SAMPLES_PER_PIXEL:i32 = 400;
+    const SAMPLES_PER_PIXEL:i32 = 200;
     const MAX_DEPTH: i32 = 50;
 
     // Pixel Buffer
     let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, ASPECT_RATIO)));
 
     // Scene, World, Sky and Camera Settings
-    let ref scene = DefaultScene::CornellBox;
+    let ref scene = DefaultScene::CornellSmoke;
     let world = Rc::new(select_default_scene(scene, &mut rng));
     let sky = select_default_scene_sky(scene);
     let mut cam_settings = select_default_scene_cam_settings(scene);

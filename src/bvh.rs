@@ -32,8 +32,8 @@ impl Hittable for BVH {
         self.root.bounding_box(time0, time1)
     }
 
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
-        self.root.hit(r, t_min, t_max)
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, rng: &mut RngGen) -> Option<HitRecord> {
+        self.root.hit(r, t_min, t_max, rng)
     }
 }
 
@@ -110,12 +110,12 @@ impl Node {
 }
 
 impl Hittable for Node {
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, rng: &mut RngGen) -> Option<HitRecord> {
         if !self.aabb.hit(r, t_min, t_max) { return None }
 
-        let hit_left = self.left.hit(r, t_min, t_max);
+        let hit_left = self.left.hit(r, t_min, t_max, rng);
         let new_t_max = if let Some(left) = &hit_left { left.t() } else { t_max };
-        let hit_right = self.right.hit(r, t_min, new_t_max);
+        let hit_right = self.right.hit(r, t_min, new_t_max, rng);
 
         if let None = hit_right { hit_left } else { hit_right }
     }

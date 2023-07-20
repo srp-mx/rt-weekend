@@ -1,4 +1,5 @@
 use super::float::Float;
+use super::rng_float::RngGen;
 use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::material::Material;
@@ -47,7 +48,7 @@ impl MovingSphere {
 }
 
 impl Hittable for MovingSphere {
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, _rng: &mut RngGen) -> Option<HitRecord> {
         let ref oc: Vec3 = r.origin() - self.center(r.time());
         let a = r.direction().length_squared();
         let half_b = Vec3::dot(oc, r.direction());

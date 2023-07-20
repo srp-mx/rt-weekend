@@ -1,5 +1,6 @@
 use super::hittable::{Hittable, HitRecord};
 use super::float::Float;
+use super::rng_float::RngGen;
 use super::vec3::Vec3;
 use super::ray::Ray;
 use super::aabb::AABB;
@@ -18,9 +19,9 @@ impl Translate {
 }
 
 impl Hittable for Translate {
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, rng: &mut RngGen) -> Option<HitRecord> {
         let offset_ray = Ray::new(&(r.origin() - &self.offset), r.direction(), r.time());
-        match self.source.hit(&offset_ray, t_min, t_max) {
+        match self.source.hit(&offset_ray, t_min, t_max, rng) {
             Some(mut hit) => {
                 hit.set_p(hit.p() + &self.offset);
                 hit.set_face_normal(&offset_ray, hit.normal().copy());

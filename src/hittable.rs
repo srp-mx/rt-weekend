@@ -1,5 +1,6 @@
 use std::rc::Rc; // NOTE(srp): Considera cambiar por std::sync::Arc
-use super::float::*;
+use super::float::Float;
+use super::rng_float::RngGen;
 use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::ray::Ray;
@@ -30,6 +31,16 @@ impl HitRecord {
         Self { p: r.at(t), normal, mat, t, u, v, in_front_face }
     }
 
+    pub fn from_settings(p: Point3,
+                         normal: Vec3,
+                         mat: Rc<dyn Material>,
+                         t: Float,
+                         u: Float,
+                         v: Float,
+                         in_front_face: bool) -> Self {
+        Self { p, normal, mat, t, u, v, in_front_face }
+    }
+
     pub fn null() -> Self {
         Self {
             p: Point3::zero(),
@@ -48,6 +59,10 @@ impl HitRecord {
 
     pub fn set_p(&mut self, p: Point3) {
         self.p = p;
+    }
+
+    pub fn set_t(&mut self, t: Float) {
+        self.t = t
     }
 
     pub fn normal(&self) -> &Vec3 {
@@ -95,6 +110,6 @@ impl HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord>;
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, rng: &mut RngGen) -> Option<HitRecord>;
     fn bounding_box(&self, time0: Float, time1: Float) -> Option<AABB>;
 }

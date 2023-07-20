@@ -1,4 +1,5 @@
 use super::float::Float;
+use super::rng_float::RngGen;
 use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::ray::Ray;
@@ -33,7 +34,7 @@ impl Hittable for XyRect {
                 Point3::new(self.x1, self.y1, self.k+eps)))
     }
 
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, _rng: &mut RngGen) -> Option<HitRecord> {
         let t = (self.k-r.origin().z()) / r.direction().z();
         if t < t_min || t > t_max {
             return None
@@ -76,7 +77,7 @@ impl Hittable for YzRect {
                 Point3::new(self.k+eps, self.y1, self.z1)))
     }
 
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, _rng: &mut RngGen) -> Option<HitRecord> {
         let t = (self.k-r.origin().x()) / r.direction().x();
         if t < t_min || t > t_max {
             return None
@@ -119,7 +120,7 @@ impl Hittable for ZxRect {
                 Point3::new(self.x1, self.k+eps, self.z1)))
     }
 
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, _rng: &mut RngGen) -> Option<HitRecord> {
         let t = (self.k-r.origin().y()) / r.direction().y();
         if t < t_min || t > t_max {
             return None

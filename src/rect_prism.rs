@@ -1,4 +1,5 @@
 use super::float::Float;
+use super::rng_float::RngGen;
 use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::hittable::{Hittable, HitRecord};
@@ -36,7 +37,7 @@ impl Hittable for RectPrism {
         Some(AABB::new(self.box_min.copy(), self.box_max.copy()))
     }
 
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
-        self.sides.hit(r, t_min, t_max)
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, rng: &mut RngGen) -> Option<HitRecord> {
+        self.sides.hit(r, t_min, t_max, rng)
     }
 }

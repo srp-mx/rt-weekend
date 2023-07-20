@@ -1,4 +1,5 @@
 use super::float::Float;
+use super::rng_float::RngGen;
 use super::vec3::Vec3;
 type Point3 = Vec3;
 use super::ray::Ray;
@@ -60,7 +61,7 @@ impl Hittable for RotateY {
         }
     }
 
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, rng: &mut RngGen) -> Option<HitRecord> {
         let origin_x = self.cos_theta*r.origin().x() - self.sin_theta*r.origin().z();
         let origin_z = self.sin_theta*r.origin().x() + self.cos_theta*r.origin().z();
         let origin = Vec3::new(origin_x, r.origin().y(), origin_z);
@@ -70,7 +71,7 @@ impl Hittable for RotateY {
 
         let rotated_r = Ray::new(&origin, &direction, r.time());
         
-        match self.source.hit(&rotated_r, t_min, t_max) {
+        match self.source.hit(&rotated_r, t_min, t_max, rng) {
             Some(mut hit) => {
                 let p_x = self.cos_theta*hit.p().x() + self.sin_theta*hit.p().z();
                 let p_z = self.sin_theta*hit.p().x() + self.cos_theta*hit.p().z();

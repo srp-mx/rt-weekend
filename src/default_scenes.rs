@@ -23,6 +23,7 @@ use super::aarect::{XyRect, YzRect, ZxRect};
 use super::rect_prism::RectPrism;
 use super::translate::Translate;
 use super::rotate_y::RotateY;
+use super::convex_constant_medium::ConvexConstantMedium;
 
 use std::path::Path;
 use std::rc::Rc;
@@ -34,6 +35,7 @@ pub enum DefaultScene {
     Earth,
     SimpleLight,
     CornellBox,
+    CornellSmoke,
 }
 
 pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableList {
@@ -44,6 +46,7 @@ pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableL
         DefaultScene::Earth => earth(),
         DefaultScene::SimpleLight => simple_light(rng),
         DefaultScene::CornellBox => cornell_box(),
+        DefaultScene::CornellSmoke => cornell_smoke(),
     }
 }
 
@@ -55,6 +58,7 @@ pub fn select_default_scene_cam_settings(scene: &DefaultScene) -> CameraBuilder 
         DefaultScene::Earth => earth_cam(),
         DefaultScene::SimpleLight => simple_light_cam(),
         DefaultScene::CornellBox => cornell_box_cam(),
+        DefaultScene::CornellSmoke => cornell_box_cam(),
     }
 }
 
@@ -67,6 +71,7 @@ pub fn select_default_scene_sky(scene: &DefaultScene) -> Sky {
             Sky::Gradient(Color::one(), Color::new(0.5, 0.7, 1.0)),
 
         DefaultScene::SimpleLight
+        | DefaultScene::CornellSmoke
         | DefaultScene::CornellBox =>
             Sky::SolidColor(Color::zero()),
     }
@@ -277,7 +282,7 @@ fn simple_light_cam() -> CameraBuilder {
     const IMAGE_WIDTH:usize = 600;
     const IMAGE_HEIGHT:usize = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as usize;
     const SAMPLES_PER_PIXEL:i32 = 200;
-    const MAX_DEPTH: i32 = 12;
+    const MAX_DEPTH: i32 = 50;
  * */
 fn cornell_box() -> HittableList {
     let mut objects = HittableList::new();
@@ -312,4 +317,38 @@ fn cornell_box_cam() -> CameraBuilder {
         .aperture(0.0)
         .vertical_fov(40.0);
     cam
+}
+
+
+/* Previous settings:
+ * IMAGE
+    const ASPECT_RATIO:Float = 1.0;
+    const IMAGE_WIDTH:usize = 600;
+    const IMAGE_HEIGHT:usize = ((IMAGE_WIDTH as Float) / ASPECT_RATIO) as usize;
+    const SAMPLES_PER_PIXEL:i32 = 200;
+    const MAX_DEPTH: i32 = 50;
+ * */
+fn cornell_smoke() -> HittableList {
+    let mut objects = HittableList::new();
+    let red = Rc::new(Lambertian::new(Rc::new(SolidColor::new(Color::new(0.65,0.05,0.05)))));
+    let white = Rc::new(Lambertian::new(Rc::new(SolidColor::new(Color::new(0.73,0.73,0.73)))));
+    let green = Rc::new(Lambertian::new(Rc::new(SolidColor::new(Color::new(0.12,0.45,0.15)))));
+    let light = Rc::new(DiffuseLight::new_from_color(&Color::new(7.0,7.0,7.0)));
+    objects.add(Rc::new(YzRect::new(0.0, 555.0, 0.0, 555.0, 555.0, green.clone())));
+    objects.add(Rc::new(YzRect::new(0.0, 555.0, 0.0, 555.0, 0.0, red.clone())));
+    objects.add(Rc::new(ZxRect::new(127.0, 432.0, 113.0, 443.0, 554.0, light.clone())));
+    objects.add(Rc::new(ZxRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white.clone())));
+    objects.add(Rc::new(ZxRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+    objects.add(Rc::new(XyRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+
+    let box1 = Rc::new(RectPrism::new(&Point3::new(0.0,0.0,0.0), &Point3::new(165.0,330.0,165.0), white.clone()));
+    let box1 = Rc::new(RotateY::new(box1, 15.0));
+    let box1 = Rc::new(Translate::new(box1, Vec3::new(265.0,0.0,295.0)));
+    objects.add(Rc::new(ConvexConstantMedium::new_from_color(box1, 0.01, Color::zero())));
+    let box2 = Rc::new(RectPrism::new(&Point3::new(0.0,0.0,0.0), &Point3::new(165.0,165.0,165.0), white.clone()));
+    let box2 = Rc::new(RotateY::new(box2, -18.0));
+    let box2 = Rc::new(Translate::new(box2, Vec3::new(130.0,0.0,65.0)));
+    objects.add(Rc::new(ConvexConstantMedium::new_from_color(box2, 0.01, Color::one())));
+
+    objects
 }

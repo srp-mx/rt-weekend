@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use super::float::*;
+use super::rng_float::RngGen;
 use super::ray::*;
 use super::hittable::*;
 use super::aabb::AABB;
@@ -32,12 +33,12 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, r:&Ray, t_min:Float, t_max:Float) -> Option<HitRecord> {
+    fn hit(&self, r:&Ray, t_min:Float, t_max:Float, rng: &mut RngGen) -> Option<HitRecord> {
         let mut closest_so_far = t_max;
         let mut hit: Option<HitRecord> = None;
 
         for object in self.objects.iter() {
-            match object.hit(r, t_min, t_max) {
+            match object.hit(r, t_min, t_max, rng) {
                 Some(object_hit) => if object_hit.t() < closest_so_far {
                         closest_so_far = object_hit.t();
                         hit = Some(object_hit);
