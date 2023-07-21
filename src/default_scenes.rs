@@ -36,6 +36,7 @@ pub enum DefaultScene {
     SimpleLight,
     CornellBox,
     CornellSmoke,
+    FinalSceneBook2,
 }
 
 pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableList {
@@ -47,6 +48,7 @@ pub fn select_default_scene(scene: &DefaultScene, rng: &mut RngGen) -> HittableL
         DefaultScene::SimpleLight => simple_light(rng),
         DefaultScene::CornellBox => cornell_box(),
         DefaultScene::CornellSmoke => cornell_smoke(),
+        DefaultScene::FinalSceneBook2 => final_scene_book2(rng),
     }
 }
 
@@ -59,6 +61,7 @@ pub fn select_default_scene_cam_settings(scene: &DefaultScene) -> CameraBuilder 
         DefaultScene::SimpleLight => simple_light_cam(),
         DefaultScene::CornellBox => cornell_box_cam(),
         DefaultScene::CornellSmoke => cornell_box_cam(),
+        DefaultScene::FinalSceneBook2 => final_scene_book2_cam(),
     }
 }
 
@@ -71,6 +74,7 @@ pub fn select_default_scene_sky(scene: &DefaultScene) -> Sky {
             Sky::Gradient(Color::one(), Color::new(0.5, 0.7, 1.0)),
 
         DefaultScene::SimpleLight
+        | DefaultScene::FinalSceneBook2
         | DefaultScene::CornellSmoke
         | DefaultScene::CornellBox =>
             Sky::SolidColor(Color::zero()),
@@ -351,4 +355,85 @@ fn cornell_smoke() -> HittableList {
     objects.add(Rc::new(ConvexConstantMedium::new_from_color(box2, 0.01, Color::one())));
 
     objects
+}
+
+/* Previous settings:
+ * IMAGE
+    const ASPECT_RATIO:Float = 1.0;
+    const IMAGE_WIDTH:usize = 800;
+    const SAMPLES_PER_PIXEL:i32 = 10_000;
+    const MAX_DEPTH: i32 = 50;
+ * */
+fn final_scene_book2(rng: &mut RngGen) -> HittableList {
+    let mut boxes1 = HittableList::new();
+    let ground = Rc::new(Lambertian::new_from_color(Color::new(0.48, 0.83, 0.53)));
+    const BOXES_PER_SIDE: i32 = 20;
+    const W: Float = 100.0;
+    let ground_src = Rc::new(RectPrism::new(&Vec3::new(0.0,-W,0.0), &(Vec3::new(W,1.0,W)), ground));
+    for i in 0..BOXES_PER_SIDE {
+        for j in 0..BOXES_PER_SIDE {
+            let x_off = -1000.0 + i as Float * W;
+            let y_off = rng.range(0.0, 98.0);
+            let z_off = -1000.0 + j as Float * W;
+            let offset = Vec3::new(x_off, y_off, z_off);
+            boxes1.add(Rc::new(Translate::new(ground_src.clone(), offset)))
+        }
+    }
+    let mut objects = HittableList::new();
+    objects.add(Rc::new(BVH::new(&mut boxes1, 0.0, 1.0, rng)));
+
+    let light = Rc::new(DiffuseLight::new_from_color(&Color::new(7.0,7.0,7.0)));
+    objects.add(Rc::new(ZxRect::new(147.0, 412.0, 123.0, 423.0, 554.0, light)));
+
+    let center1 = Point3::new(400.0, 400.0, 200.0);
+    let center2 = &center1 + Vec3::new(30.0,0.0,0.0);
+    let mov_sph_mat = Rc::new(Lambertian::new_from_color(Color::new(0.7,0.3,0.1)));
+    objects.add(Rc::new(MovingSphere::new(center1, center2, 0.0, 1.0, 50.0, mov_sph_mat)));
+
+    let glass = Rc::new(Dielectric::new(1.5));
+    objects.add(Rc::new(Sphere::new(Point3::new(260.0,150.0,45.0), 50.0, glass.clone())));
+    let met = Rc::new(Metal::new(Color::new(0.8,0.8,0.9), 1.0));
+    objects.add(Rc::new(Sphere::new(Point3::new(0.0,150.0,145.0), 50.0, met)));
+
+    let subsurf_out = Rc::new(Dielectric::new(1.5));
+    let boundary = Rc::new(Sphere::new(Point3::new(360.0,150.0,145.0), 70.0, subsurf_out));
+    objects.add(boundary.clone());
+    objects.add(Rc::new(ConvexConstantMedium::new_from_color(boundary.clone(), 0.2, Color::new(0.2, 0.4, 0.9))));
+
+    let subsurf_out = Rc::new(Dielectric::new(1.5));
+    let boundary = Rc::new(Sphere::new(Point3::zero(), 5000.0, subsurf_out));
+    objects.add(Rc::new(ConvexConstantMedium::new_from_color(boundary, 0.0001, Color::one())));
+
+    let emat = Rc::new(Lambertian::new(Rc::new(ImageTexture::new(Path::new("earthmap.jpg")))));
+    objects.add(Rc::new(Sphere::new(Point3::new(400.0,200.0,400.0), 100.0, emat)));
+
+    let pertext = Rc::new(NoiseTexture::new(0.1, rng));
+    objects.add(Rc::new(Sphere::new(Point3::new(220.0,280.0,300.0), 80.0, Rc::new(Lambertian::new(pertext)))));
+    
+    let mut boxes2 = HittableList::new();
+    let white = Rc::new(Lambertian::new_from_color(Color::new(0.73, 0.73, 0.73)));
+    const NS: i32 = 1000;
+    let sph_src = Rc::new(Sphere::new(Point3::zero(), 10.0, white));
+    for _j in 0..NS {
+        boxes2.add(Rc::new(Translate::new(sph_src.clone(), Point3::random_range(rng, 0.0, 165.0))));
+    }
+
+    let bvh = Rc::new(BVH::new(&mut boxes2, 0.0, 1.0, rng));
+    let rotated = Rc::new(RotateY::new(bvh, 15.0));
+    let translated = Rc::new(Translate::new(rotated, Vec3::new(-100.0, 270.0, 395.0)));
+    objects.add(translated);
+
+    objects
+}
+
+fn final_scene_book2_cam() -> CameraBuilder {
+    let mut cam = CameraBuilder::new();
+    cam.aspect_ratio(1.0)
+        .lookfrom(Point3::new(478.0, 278.0, -600.0))
+        .lookat(Point3::new(278.0, 278.0, 0.0))
+        .aperture(0.0)
+        .vertical_fov(40.0)
+        .shutter_open_time(0.0)
+        .shutter_close_time(1.0);
+    cam
 }

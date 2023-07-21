@@ -53,15 +53,15 @@ fn main() {
 
     // Image
     const ASPECT_RATIO:Float = 1.0;
-    const IMAGE_WIDTH:usize = 300;
-    const SAMPLES_PER_PIXEL:i32 = 200;
-    const MAX_DEPTH: i32 = 50;
+    const IMAGE_WIDTH:usize = 200;
+    const SAMPLES_PER_PIXEL:i32 = 100;
+    const MAX_DEPTH: i32 = 5;
 
     // Pixel Buffer
     let buffer_lock = Arc::new(RwLock::new(PixelBuffer::new(IMAGE_WIDTH, ASPECT_RATIO)));
 
     // Scene, World, Sky and Camera Settings
-    let ref scene = DefaultScene::CornellSmoke;
+    let ref scene = DefaultScene::FinalSceneBook2;
     let world = Rc::new(select_default_scene(scene, &mut rng));
     let sky = select_default_scene_sky(scene);
     let mut cam_settings = select_default_scene_cam_settings(scene);

@@ -3,7 +3,8 @@ use super::material::{Material, Scatter};
 use super::ray::Ray;
 use super::hittable::HitRecord;
 use super::vec3::Vec3;
-use super::texture::Texture;
+use super::color::Color;
+use super::texture::{Texture, SolidColor};
 
 use std::rc::Rc;
 
@@ -14,6 +15,10 @@ pub struct Lambertian {
 impl Lambertian {
     pub fn new(albedo: Rc<dyn Texture>) -> Self {
         Self { albedo }
+    }
+
+    pub fn new_from_color(c: Color) -> Self {
+        Self::new(Rc::new(SolidColor::new(c)))
     }
 }
 
